@@ -1,0 +1,6 @@
+[submodule "vale"]
+	path = vale
+	url = https://github.com/project-everest/vale/
+[submodule "hacl-star"]
+	path = hacl-star
+	url = https://github.com/mitls/hacl-star/
