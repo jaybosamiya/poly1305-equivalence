@@ -1,0 +1,20 @@
+diff --git a/specs/lemmas/Spec.Poly1305.Lemmas.fst b/specs/lemmas/Spec.Poly1305.Lemmas.fst
+index af0c397b..1fc1ae77 100644
+--- a/specs/lemmas/Spec.Poly1305.Lemmas.fst
++++ b/specs/lemmas/Spec.Poly1305.Lemmas.fst
+@@ -1,5 +1,8 @@
+ module Spec.Poly1305.Lemmas
+ 
++open Spec.Lib.IntTypes // added to prevent error for [size_t]
++open FStar.Mul         // added to prevent error for [8*len]
++
+ val lemma_prime_value: n:nat -> Lemma
+   (requires (n = 130))
+   (ensures (pow2 n - 5 = 0x3fffffffffffffffffffffffffffffffb))
+@@ -8,4 +11,5 @@ let lemma_prime_value n = assert_norm(pow2 130 - 5 = 0x3ffffffffffffffffffffffff
+ 
+ val lemma_block_elem: len:size_t{len <= 16} -> 
+ 		      Lemma (pow2 (8*len) <= pow2 128)
+-		      
++
++let lemma_block_elem len = () // added to silence warning
