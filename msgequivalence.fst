@@ -1,4 +1,4 @@
-module InpEquivalence
+module MsgEquivalence
 
 (** Prove equivalence b/w the input types used by the Vale and the HACL*
     specs.
