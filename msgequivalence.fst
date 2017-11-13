@@ -21,6 +21,13 @@ val lseq_eq: a:Type -> len:size_t ->
     [SMTPat (lseq a len)]
 let lseq_eq a len = admit ()
 
+(* We make the equality same as checking whether the number encoded is the same *)
+val intseq_eq: #t:inttype -> #len:size_t -> a:intseq t len -> b:intseq t len ->
+  Lemma ((a = b) <==>
+         (nat_from_intseq_le a = nat_from_intseq_le b))
+    [SMTPat (a = b)]
+let intseq_eq #t #len a b = admit ()
+
     assume
 (* Let us say that an [append] function is provided by the API *)
 val append: #len1:size_t -> #len2:size_t ->
@@ -112,7 +119,7 @@ val forward :
      (inp_vale_to_hacl #l inp len) =
      msg))
 
-let forward #l inp len msg =
+let rec forward #l inp len msg =
   match len with
   | 0 -> ()
   | _ ->
@@ -123,6 +130,29 @@ let forward #l inp len msg =
     | true ->
       admit () // TODO: prove more
 
+val reverse :
+  #l:size_t ->
+  inp:(int->nat128) ->
+  len:nat{l=len} ->
+  msg:lbytes l ->
+  Lemma (
+    (len = 0) \/
+    ((inp_vale_to_hacl #l inp len) =
+     msg)
+    ==>
+    (equal_fns inp len
+       (fst (inp_hacl_to_vale msg))
+       (snd (inp_hacl_to_vale msg))))
+
+let rec reverse #l inp len msg =
+  match len with
+  | 0 -> ()
+  | _ ->
+    let msg' = inp_vale_to_hacl #l inp len in
+    match msg = msg' with
+    | false -> ()
+    | true ->
+      admit () // TODO: prove more
 
 val inp_equivalence :
   #l:size_t ->
@@ -138,6 +168,5 @@ val inp_equivalence :
      (inp_vale_to_hacl #l inp len) = msg))
 
 let inp_equivalence #l inp len msg =
-  match len with
-  | 0 -> ()
-  | _ -> admit () // TODO: prove
+  forward #l inp len msg;
+  reverse #l inp len msg
