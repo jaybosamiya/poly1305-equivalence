@@ -15,6 +15,19 @@ type nat128 = ValeSpec.nat128
 open Spec.Lib.IntTypes
 open Spec.Lib.IntSeq
 
+(* Allow equality for lseqs *)
+val lseq_eq: a:Type -> len:size_t ->
+  Lemma (hasEq (lseq a len))
+    [SMTPat (lseq a len)]
+let lseq_eq a len = admit ()
+
+    assume
+(* Let us say that an [append] function is provided by the API *)
+val append: #len1:size_t -> #len2:size_t ->
+  #len:size_t{len=len1+len2} -> s1:lbytes len1 -> s2:lbytes len2 ->
+  s:lbytes len{(sub s 0 len1 = s1) /\
+               (sub s len1 len2 = s2)}
+
 val inp_hacl_to_vale : #l:size_t -> msg:lbytes l -> ((inp:int->nat128) * len:nat{l=len})
 let pick_xth_block (#l:size_t) (msg:lbytes l) (x:nat{16`op_Multiply`x<l}) : nat128 =
   let start = x `op_Multiply` 16 in
@@ -28,30 +41,49 @@ let inp_hacl_to_vale #l msg =
     else pick_xth_block msg x in
   g, l
 
+
+
 val inp_vale_to_hacl : #l:size_t -> (inp:int->nat128) -> len:pos{l=len} -> msg:lbytes l
+
+(* Specifically all "full" blocks *)
+let rec inp_to_lseq'
+    (inp:int->nat128)
+    (rem_len:size_t{rem_len % 16 = 0})
+    (i:pos{i = rem_len / 16})
+  : lbytes rem_len =
+  match i with
+  | 1 -> nat_to_bytes_le rem_len (inp i)
+  | _ ->
+    let prev = inp_to_lseq' inp (rem_len - 16) (i - 1) in
+    let curr = nat_to_bytes_le 16 (inp i) in
+    append prev curr
+(* Any length *)
+let inp_to_lseq
+    (inp:int->nat128)
+    (rem_len:size_t)
+    (i:pos{(rem_len % 16 == 0 <==> i = rem_len / 16) /\ 
+           (rem_len % 16 <> 0 <==> i = rem_len / 16 + 1)})
+  : lbytes rem_len =
+  if rem_len % 16 = 0
+  then inp_to_lseq' inp rem_len i
+  else
+    let cur_block_len : size_t = rem_len % 16 in
+    let rem_len' : size_t = rem_len - cur_block_len in
+    let curr' = nat_to_bytes_le 16 (inp i) in
+    let curr = sub curr' 0 cur_block_len in
+    match i with
+    | 1 -> curr
+    | _ ->
+      let i':pos = i - 1 in
+      let prev = inp_to_lseq'
+          inp rem_len' i' in
+      append #rem_len' #cur_block_len #rem_len prev curr
+
 let inp_vale_to_hacl #l inp len =
   let nBlocks = len / 16 in
   let nExtra = len % 16 in
-  let n'Blocks : nat = if nExtra = 0 then nBlocks else nBlocks + 1 in
-  let rec inp_to_list (rem:nat{rem<=n'Blocks}) : (x:list nat128{List.Tot.length x = rem}) =
-    match rem with
-    | 0 -> []
-    | _ -> inp (n'Blocks - rem - 1) :: inp_to_list (rem - 1) in
-  let inp_list = inp_to_list n'Blocks in
-  let inp_list_of_lseq = List.Tot.map (nat_to_bytes_le 16) inp_list in
-  let rec create_msg lst (blk:nat{List.Tot.length lst + blk = n'Blocks}) : lbytes l =
-    let blk = n'Blocks - List.Tot.length lst in
-    match lst with
-    | [] -> create #uint8 len (u8 0)
-    | [h] -> update_sub (create_msg [] (blk+1)) (blk `op_Multiply` 16)
-               (if nExtra = 0 then 16 else nExtra)
-               (sub h 0 (if nExtra = 0 then 16 else nExtra))
-    | h :: t -> update_sub (create_msg t (blk+1)) (blk `op_Multiply` 16)
-                  16 h in
-  create_msg inp_list_of_lseq 0
-
-let equal_intseqs a b =
-  nat_from_intseq_le a = nat_from_intseq_le b
+  let n'Blocks = if nExtra = 0 then nBlocks else nBlocks + 1 in
+  inp_to_lseq inp len n'Blocks
 
 val equal_fns :
   (inp1:int->nat128) -> len1:nat ->
@@ -66,23 +98,6 @@ let rec equal_fns inp1 len1 inp2 len2 =
             (fun x -> inp1 (x - 1)) (len1 - 1)
             (fun x -> inp2 (x - 1)) (len2 - 1))
 
-val sub_update_partial_semantics :
-  #len:size_t ->
-  x:lbytes len -> s0:size_t -> n0:size_t{s0 + n0 <= len} -> y:lbytes n0 ->
-  z:lbytes len ->
-  s1:size_t -> n1:size_t{s1+n1 <= len} ->
-  Lemma (
-    (((s1 >= s0 + n0) \/ (s1 + n1 <= s0)) ==>
-     (equal_intseqs
-        (sub z s1 n1)
-        (sub x s1 n1))) /\
-    (((s1 >= s0) /\ (s1+n1 <= s0+n0)) ==>
-     (equal_intseqs
-        (sub z s1 n1)
-        (sub y (s1-s0) n1))))
-(* TODO: Probably figure out a better way around this? *)
-let sub_update_partial_semantics #len x s0 n0 y z s1 n1 = admit ()
-
 val forward :
   #l:size_t ->
   inp:(int->nat128) ->
@@ -94,9 +109,8 @@ val forward :
         (fst (inp_hacl_to_vale msg))
         (snd (inp_hacl_to_vale msg)))
      ==>
-     (equal_intseqs
-        (inp_vale_to_hacl #l inp len)
-        msg)))
+     (inp_vale_to_hacl #l inp len) =
+     msg))
 
 let forward #l inp len msg =
   match len with
@@ -121,9 +135,7 @@ val inp_equivalence :
         (fst (inp_hacl_to_vale msg))
         (snd (inp_hacl_to_vale msg)))
      <==>
-     (equal_intseqs
-        (inp_vale_to_hacl #l inp len)
-        msg)))
+     (inp_vale_to_hacl #l inp len) = msg))
 
 let inp_equivalence #l inp len msg =
   match len with
