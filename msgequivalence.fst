@@ -10,6 +10,9 @@ module MsgEquivalence
 module ValeSpec = Poly1305.Spec_s
 module HaclSpec = Spec.Poly1305
 
+                  (* Need to increase limits to have the proofs go through *)
+                  #set-options "--z3rlimit 20"
+
 type nat128 = ValeSpec.nat128
 
 open Spec.Lib.IntTypes
@@ -48,22 +51,7 @@ let sub_property #a #len s start n start' n' = admit ()
 type vale_msg (l:nat) = a:(int->nat128){a (l / 16) < pow2 (8 `op_Multiply` (l % 16))}
 type hacl_msg (l:size_t) = lbytes l
 
-val inp_hacl_to_vale : #l:size_t -> msg:lbytes l -> inp:vale_msg l
-let pick_xth_block (#l:size_t) (msg:lbytes l) (x:nat{16`op_Multiply`x<l}) : nat128 =
-  let start = x `op_Multiply` 16 in
-  let len':size_t = min (l - start) 16 in
-  let y = nat_from_intseq_le (sub msg start len') in
-  Math.Lemmas.pow2_le_compat 128 (8 `op_Multiply` len');
-  y
-let inp_hacl_to_vale #l msg =
-  let g (x:int) : nat128 =
-    if x < 0 || 16 `op_Multiply` x >= l then 0
-    else pick_xth_block msg x in
-  g
-
-
 val inp_vale_to_hacl : #l:size_t -> inp:vale_msg l -> msg:lbytes l
-
 let rec inp_vale_to_hacl #l inp =
   match l with
   | 0 -> nat_to_bytes_le 0 0
@@ -78,6 +66,27 @@ let rec inp_vale_to_hacl #l inp =
     let cur_block_inp : (x:nat{x<pow2 (8 `op_Multiply` cur_block_len)}) = inp cur_block_num in
     let cur_block = nat_to_bytes_le cur_block_len cur_block_inp in
     append #prev_l #cur_block_len #l prev_msg cur_block
+
+val inp_hacl_to_vale : #l:size_t -> msg:lbytes l -> inp:vale_msg l
+let rec inp_hacl_to_vale #l msg =
+  match l with
+  | 0 -> fun _ -> 0
+  | _ ->
+    let excess = l % 16 in
+    let cur_block_len : (x:size_t{0<x /\ x<=16 /\ x<=l}) = if excess <> 0 then excess else 16 in
+    let cur_block_num = if excess <> 0 then l / 16 else l / 16 - 1 in
+    let prev_l : (x:size_t{x<l}) = l - cur_block_len in
+    let prev_msg = sub msg 0 prev_l in
+    let prev_inp = inp_hacl_to_vale #prev_l prev_msg in
+    let cur_block_msg = sub msg prev_l cur_block_len in
+    let cur_block = nat_from_intseq_le cur_block_msg in
+    fun i ->
+      if i < 0 || i > cur_block_num
+      then 0
+      else (if i = cur_block_num
+            then (Math.Lemmas.pow2_le_compat 128 (8 `op_Multiply` cur_block_len); cur_block)
+            else prev_inp i)
+
 
 (* Now for the inverse proofs *)
 val equal_fns :
@@ -104,8 +113,8 @@ val inp_equivalence :
      <==>
      (inp_vale_to_hacl #l inp) = msg))
 
-    (* Need to increase limits to prove equivalence lemma below *)
-    #set-options "--z3rlimit 20"
-
-let inp_equivalence #l inp msg =
-  intseq_eq (inp_vale_to_hacl #l inp) msg
+let rec inp_equivalence #l inp msg =
+  intseq_eq (inp_vale_to_hacl #l inp) msg; (* just to have equality act nice *)
+  match l with
+  | 0 -> ()
+  | _ -> admit ()
