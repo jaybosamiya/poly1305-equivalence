@@ -35,7 +35,20 @@ val append: #len1:size_t -> #len2:size_t ->
   s:lbytes len{(sub s 0 len1 = s1) /\
                (sub s len1 len2 = s2)}
 
-val inp_hacl_to_vale : #l:size_t -> msg:lbytes l -> ((inp:int->nat128) * len:nat{l=len})
+(* Axiom about [sub] which tells us that a subsequence of a subsequence is itself a subsequence *)
+val sub_property:
+  #a:Type -> #len:size_t ->
+  s:lseq a len ->
+  start:size_t -> n:size_t{start + n <= len} ->
+  start':size_t{start' > start} -> n':size_t{start' + n' <= start + n} ->
+Lemma (sub s start' n' = sub (sub s start n) (start' - start) n')
+let sub_property #a #len s start n start' n' = admit ()
+
+(* Now we actually write down the conversions *)
+type vale_msg (l:nat) = a:(int->nat128){a (l / 16) < pow2 (8 `op_Multiply` (l % 16))}
+type hacl_msg (l:size_t) = lbytes l
+
+val inp_hacl_to_vale : #l:size_t -> msg:lbytes l -> inp:vale_msg l
 let pick_xth_block (#l:size_t) (msg:lbytes l) (x:nat{16`op_Multiply`x<l}) : nat128 =
   let start = x `op_Multiply` 16 in
   let len':size_t = min (l - start) 16 in
@@ -46,52 +59,27 @@ let inp_hacl_to_vale #l msg =
   let g (x:int) : nat128 =
     if x < 0 || 16 `op_Multiply` x >= l then 0
     else pick_xth_block msg x in
-  g, l
+  g
 
 
+val inp_vale_to_hacl : #l:size_t -> inp:vale_msg l -> msg:lbytes l
 
-val inp_vale_to_hacl : #l:size_t -> (inp:int->nat128) -> len:pos{l=len} -> msg:lbytes l
-
-(* Specifically all "full" blocks *)
-let rec inp_to_lseq'
-    (inp:int->nat128)
-    (rem_len:size_t{rem_len % 16 = 0})
-    (i:pos{i = rem_len / 16})
-  : lbytes rem_len =
-  match i with
-  | 1 -> nat_to_bytes_le rem_len (inp i)
+let rec inp_vale_to_hacl #l inp =
+  match l with
+  | 0 -> nat_to_bytes_le 0 0
   | _ ->
-    let prev = inp_to_lseq' inp (rem_len - 16) (i - 1) in
-    let curr = nat_to_bytes_le 16 (inp i) in
-    append prev curr
-(* Any length *)
-let inp_to_lseq
-    (inp:int->nat128)
-    (rem_len:size_t)
-    (i:pos{(rem_len % 16 == 0 <==> i = rem_len / 16) /\ 
-           (rem_len % 16 <> 0 <==> i = rem_len / 16 + 1)})
-  : lbytes rem_len =
-  if rem_len % 16 = 0
-  then inp_to_lseq' inp rem_len i
-  else
-    let cur_block_len : size_t = rem_len % 16 in
-    let rem_len' : size_t = rem_len - cur_block_len in
-    let curr' = nat_to_bytes_le 16 (inp i) in
-    let curr = sub curr' 0 cur_block_len in
-    match i with
-    | 1 -> curr
-    | _ ->
-      let i':pos = i - 1 in
-      let prev = inp_to_lseq'
-          inp rem_len' i' in
-      append #rem_len' #cur_block_len #rem_len prev curr
+    let excess = l % 16 in
+    let cur_block_len : (x:size_t{0<x /\ x<=16 /\ x<=l}) = if excess <> 0 then excess else 16 in
+    let cur_block_num = if excess <> 0 then l / 16 else l / 16 - 1 in
+    let prev_l : (x:size_t{x<l}) = l - cur_block_len in
+    let prev_inp : vale_msg prev_l =
+      fun i -> if i = cur_block_num then 0 else inp i in
+    let prev_msg : lbytes prev_l = inp_vale_to_hacl #prev_l prev_inp in
+    let cur_block_inp : (x:nat{x<pow2 (8 `op_Multiply` cur_block_len)}) = inp cur_block_num in
+    let cur_block = nat_to_bytes_le cur_block_len cur_block_inp in
+    append #prev_l #cur_block_len #l prev_msg cur_block
 
-let inp_vale_to_hacl #l inp len =
-  let nBlocks = len / 16 in
-  let nExtra = len % 16 in
-  let n'Blocks = if nExtra = 0 then nBlocks else nBlocks + 1 in
-  inp_to_lseq inp len n'Blocks
-
+(* Now for the inverse proofs *)
 val equal_fns :
   (inp1:int->nat128) -> len1:nat ->
   (inp2:int->nat128) -> len2:nat ->
@@ -105,68 +93,19 @@ let rec equal_fns inp1 len1 inp2 len2 =
             (fun x -> inp1 (x - 1)) (len1 - 1)
             (fun x -> inp2 (x - 1)) (len2 - 1))
 
-val forward :
-  #l:size_t ->
-  inp:(int->nat128) ->
-  len:nat{l=len} ->
-  msg:lbytes l ->
-  Lemma (
-    (len = 0) \/
-    ((equal_fns inp len
-        (fst (inp_hacl_to_vale msg))
-        (snd (inp_hacl_to_vale msg)))
-     ==>
-     (inp_vale_to_hacl #l inp len) =
-     msg))
-
-let rec forward #l inp len msg =
-  match len with
-  | 0 -> ()
-  | _ ->
-    let inp', len' = inp_hacl_to_vale msg in
-    assert (len = len');
-    match equal_fns inp len inp' len' with
-    | false -> ()
-    | true ->
-      admit () // TODO: prove more
-
-val reverse :
-  #l:size_t ->
-  inp:(int->nat128) ->
-  len:nat{l=len} ->
-  msg:lbytes l ->
-  Lemma (
-    (len = 0) \/
-    ((inp_vale_to_hacl #l inp len) =
-     msg)
-    ==>
-    (equal_fns inp len
-       (fst (inp_hacl_to_vale msg))
-       (snd (inp_hacl_to_vale msg))))
-
-let rec reverse #l inp len msg =
-  match len with
-  | 0 -> ()
-  | _ ->
-    let msg' = inp_vale_to_hacl #l inp len in
-    match msg = msg' with
-    | false -> ()
-    | true ->
-      admit () // TODO: prove more
-
 val inp_equivalence :
   #l:size_t ->
-  inp:(int->nat128) ->
-  len:nat{l=len} ->
-  msg:lbytes l ->
+  inp:vale_msg l ->
+  msg:hacl_msg l ->
   Lemma (
-    (len = 0) \/
-    ((equal_fns inp len
-        (fst (inp_hacl_to_vale msg))
-        (snd (inp_hacl_to_vale msg)))
+    ((equal_fns inp l
+        (inp_hacl_to_vale msg)
+        l)
      <==>
-     (inp_vale_to_hacl #l inp len) = msg))
+     (inp_vale_to_hacl #l inp) = msg))
 
-let inp_equivalence #l inp len msg =
-  forward #l inp len msg;
-  reverse #l inp len msg
+    (* Need to increase limits to prove equivalence lemma below *)
+    #set-options "--z3rlimit 20"
+
+let inp_equivalence #l inp msg =
+  intseq_eq (inp_vale_to_hacl #l inp) msg
