@@ -159,15 +159,28 @@ let rem_prop_2 #l #lst #rem i =
   assert (rem % 16 = 0); // required for the prover to realize this
         ()
 
+val part_inv_vale :
+  #l:size_t ->
+  inp:vale_msg l ->
+  Lemma (inp_hacl_to_vale (inp_vale_to_hacl inp) = inp)
+let rec part_inv_vale #l inp =
+  match l with
+  | 0 -> ()
+  | _ ->
+    let msg = inp_vale_to_hacl inp in
+    let lst = if l % 16 = 0 then 16 else l % 16 in
+    let rem = l - lst in
+    rem_prop_1 #l #lst #rem inp;
+    rem_prop_2 #l #lst #rem msg;
+    let prev_inp = remove_last_block #l #lst #rem inp in
+    part_inv_vale #rem prev_inp
+
 val inp_equivalence :
   #l:size_t ->
   inp:vale_msg l ->
   msg:hacl_msg l ->
   Lemma ((inp_hacl_to_vale #l msg) = inp <==>
          (inp_vale_to_hacl #l inp) = msg)
-
-        (* Need to increase limits to have the proofs go through *)
-        #set-options "--z3rlimit 50"
 
 let rec inp_equivalence #l inp msg =
   match l with
