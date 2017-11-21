@@ -78,10 +78,25 @@ let sub_of_sub_property #a #len s start n start' n' =
     (sub s start' n')
     (sub (sub s start n) (start' - start) n')
 
-(* Now we actually write down the conversions *)
-
 type vale_msg (l:nat) = a:(int->nat128){a (l / 16) < pow2 (8 `op_Multiply` (l % 16))}
 type hacl_msg (l:size_t) = lbytes l
+
+(** Axiom: [vale_msg]s have equality *)
+val vale_msg_type_eq: #l:nat ->
+  Lemma (hasEq (vale_msg l))
+    [SMTPat (vale_msg l)]
+let vale_msg_type_eq #l = admit ()
+
+(** Axiom: Two [vale_msg]s are equal iff all their values are equal
+    (in the ranges that matter) *)
+val vale_msg_eq:
+  #l:nat ->
+  a:vale_msg l ->
+  b:vale_msg l ->
+  Lemma (a = b <==> (forall (x:int{x >= 0 /\ x <= (l/16)}). a x = b x))
+let vale_msg_eq #l a b = admit ()
+
+(* Now we actually write down the conversions *)
 
 val inp_vale_to_hacl : #l:size_t -> inp:vale_msg l -> msg:lbytes l
 let rec inp_vale_to_hacl #l inp =
@@ -111,32 +126,15 @@ let inp_hacl_to_vale #l msg =
       nat_from_intseq_le (sub msg start len) in
   inp
 
-(* Now for the inverse proofs *)
-val equal_fns :
-  (inp1:int->nat128) -> len1:nat ->
-  (inp2:int->nat128) -> len2:nat ->
-  eql:bool
-let rec equal_fns inp1 len1 inp2 len2 =
-  match len1 with
-  | 0 -> (len2 = 0)
-  | _ -> (len1 = len2) &&
-         (inp1 0 = inp2 0) &&
-         (equal_fns
-            (fun x -> inp1 (x - 1)) (len1 - 1)
-            (fun x -> inp2 (x - 1)) (len2 - 1))
-
 val inp_equivalence :
   #l:size_t ->
   inp:vale_msg l ->
   msg:hacl_msg l ->
-  Lemma (
-    ((equal_fns inp l
-        (inp_hacl_to_vale msg)
-        l)
-     <==>
-     (inp_vale_to_hacl #l inp) = msg))
+  Lemma ((inp_hacl_to_vale #l msg) = inp <==>
+         (inp_vale_to_hacl #l inp) = msg)
 
 let rec inp_equivalence #l inp msg =
+  vale_msg_eq (inp_hacl_to_vale #l msg) inp;
   intseq_eq (inp_vale_to_hacl #l inp) msg; (* just to have equality act nice *)
   match l with
   | 0 -> ()
