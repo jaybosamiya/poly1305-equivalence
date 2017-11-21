@@ -88,10 +88,12 @@ let vale_msg_type_eq #l = admit ()
     (in the ranges that matter) *)
 val vale_msg_eq:
   #l:nat ->
-  a:vale_msg l ->
-  b:vale_msg l ->
-  Lemma (a = b <==> (forall (x:int{x >= 0 /\ x <= (l/16)}). a x = b x))
-let vale_msg_eq #l a b = admit ()
+  Lemma (
+    forall (a:vale_msg l)
+      (b:vale_msg l).
+        a = b <==> (forall (x:int{x >= 0 /\ x <= (l/16)}). a x = b x))
+    [SMTPat (vale_msg l)]
+let vale_msg_eq #l = admit ()
 
 (* Now we actually write down the conversions *)
 
@@ -131,7 +133,6 @@ val inp_equivalence :
          (inp_vale_to_hacl #l inp) = msg)
 
 let rec inp_equivalence #l inp msg =
-  vale_msg_eq (inp_hacl_to_vale #l msg) inp;
   match l with
   | 0 -> ()
   | _ -> admit ()
