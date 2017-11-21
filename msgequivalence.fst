@@ -100,25 +100,16 @@ let rec inp_vale_to_hacl #l inp =
     append #prev_l #cur_block_len #l prev_msg cur_block
 
 val inp_hacl_to_vale : #l:size_t -> msg:lbytes l -> inp:vale_msg l
-let rec inp_hacl_to_vale #l msg =
-  match l with
-  | 0 -> fun _ -> 0
-  | _ ->
-    let excess = l % 16 in
-    let cur_block_len : (x:size_t{0<x /\ x<=16 /\ x<=l}) = if excess <> 0 then excess else 16 in
-    let cur_block_num = if excess <> 0 then l / 16 else l / 16 - 1 in
-    let prev_l : (x:size_t{x<l}) = l - cur_block_len in
-    let prev_msg = sub msg 0 prev_l in
-    let prev_inp = inp_hacl_to_vale #prev_l prev_msg in
-    let cur_block_msg = sub msg prev_l cur_block_len in
-    let cur_block = nat_from_intseq_le cur_block_msg in
-    fun i ->
-      if i < 0 || i > cur_block_num
-      then 0
-      else (if i = cur_block_num
-            then (Math.Lemmas.pow2_le_compat 128 (8 `op_Multiply` cur_block_len); cur_block)
-            else prev_inp i)
-
+let inp_hacl_to_vale #l msg =
+  let inp i : nat128 =
+    let start = 16 `op_Multiply` i in
+    if i < 0 || start >= l
+    then 0
+    else
+      let len:size_t = min (l - start) 16 in
+      Math.Lemmas.pow2_le_compat 128 (8 `op_Multiply` len);
+      nat_from_intseq_le (sub msg start len) in
+  inp
 
 (* Now for the inverse proofs *)
 val equal_fns :
