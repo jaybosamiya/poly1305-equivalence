@@ -71,9 +71,12 @@ val sub_of_sub_property:
   #t:inttype -> #len:size_t ->
   s:intseq t len ->
   start:size_t -> n:size_t{start + n <= len} ->
-  start':size_t{start' > start} -> n':size_t{start' + n' <= start + n} ->
-Lemma (sub s start' n' = sub (sub s start n) (start' - start) n')
-let sub_of_sub_property #a #len s start n start' n' = ()
+  Lemma
+    (forall (start':size_t{start' <= start})
+       (n':size_t{start + n <= start' + n' /\ start' + n' <= len}).
+         sub s start n = sub (sub s start' n') (start - start') n)
+    [SMTPat (sub s start n)]
+let sub_of_sub_property #a #len s start n = ()
 
 type vale_msg (l:nat) = a:(int->nat128){a (l / 16) < pow2 (8 `op_Multiply` (l % 16))}
 type hacl_msg (l:size_t) = lbytes l
