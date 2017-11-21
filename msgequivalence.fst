@@ -78,7 +78,7 @@ val append: #len1:size_t -> #len2:size_t ->
   s:lbytes len{(sub s 0 len1 = s1) /\
                (sub s len1 len2 = s2)}
 
-type vale_msg (l:nat) = a:(int->nat128){a (l / 16) < pow2 (8 `op_Multiply` (l % 16))}
+type vale_msg (l:nat) = a:(int->nat128){l % 16 <> 0 ==> a (l / 16) < pow2 (8 `op_Multiply` (l % 16))}
 type hacl_msg (l:size_t) = lbytes l
 
 (** Axiom: [vale_msg]s have equality *)
