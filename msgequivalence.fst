@@ -102,21 +102,31 @@ let vale_msg_eq #l = admit ()
 
 (* Now we actually write down the conversions *)
 
-val inp_vale_to_hacl : #l:size_t -> inp:vale_msg l -> msg:lbytes l
+val remove_last_block :
+  #l:size_t{l > 0} ->
+#lst:size_t{(l % 16 = 0 <==> lst = 16) /\ (l % 16 <> 0 <==> lst = l % 16)} ->
+#rem:size_t{rem = l - lst} ->
+v:vale_msg l ->
+v':vale_msg rem{forall x. v x = v' x}
+let remove_last_block #l #lst #rem v =
+  let v' : vale_msg rem =
+    fun i -> v i in
+  v'
+
+val inp_vale_to_hacl : #l:size_t -> inp:vale_msg l -> Tot (msg:lbytes l)
 let rec inp_vale_to_hacl #l inp =
   match l with
   | 0 -> nat_to_bytes_le 0 0
   | _ ->
-    let excess = l % 16 in
-    let cur_block_len : (x:size_t{0<x /\ x<=16 /\ x<=l}) = if excess <> 0 then excess else 16 in
-    let cur_block_num = if excess <> 0 then l / 16 else l / 16 - 1 in
-    let prev_l : (x:size_t{x<l}) = l - cur_block_len in
-    let prev_inp : vale_msg prev_l =
-      fun i -> if i = cur_block_num then 0 else inp i in
-    let prev_msg : lbytes prev_l = inp_vale_to_hacl #prev_l prev_inp in
-    let cur_block_inp : (x:nat{x<pow2 (8 `op_Multiply` cur_block_len)}) = inp cur_block_num in
-    let cur_block = nat_to_bytes_le cur_block_len cur_block_inp in
-    append #prev_l #cur_block_len #l prev_msg cur_block
+    let len, i : ((x:size_t{x<=l}) * int) =
+      if l % 16 <> 0
+      then l % 16, l / 16
+      else 16, (l / 16) - 1 in
+    let cur_block =
+      nat_to_bytes_le len (inp i) in
+    let prev_blocks =
+      inp_vale_to_hacl #(l - len) (remove_last_block #l #len #(l-len) inp) in
+    append prev_blocks cur_block
 
 val inp_hacl_to_vale : #l:size_t -> msg:lbytes l -> inp:vale_msg l
 let inp_hacl_to_vale #l msg =
