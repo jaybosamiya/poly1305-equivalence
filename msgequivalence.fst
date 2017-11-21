@@ -94,7 +94,9 @@ val vale_msg_eq:
   Lemma (
     forall (a:vale_msg l)
       (b:vale_msg l).
-        a = b <==> (forall (x:int{x >= 0 /\ x <= (l/16)}). a x = b x))
+        a = b <==>
+    ((forall (x:int{x >= 0 /\ x < (l/16)}). a x = b x) /\
+     (l % 16 <> 0 ==> a (l/16) = b (l/16))))
     [SMTPat (vale_msg l)]
 let vale_msg_eq #l = admit ()
 
