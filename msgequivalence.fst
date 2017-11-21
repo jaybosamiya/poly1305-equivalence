@@ -175,6 +175,28 @@ let rec part_inv_vale #l inp =
     let prev_inp = remove_last_block #l #lst #rem inp in
     part_inv_vale #rem prev_inp
 
+
+                       (* Need to increase limits to have the proofs go through *)
+                       #set-options "--z3rlimit 50"
+
+val part_inv_hacl :
+  #l:size_t ->
+  msg:hacl_msg l ->
+  Lemma (inp_vale_to_hacl (inp_hacl_to_vale msg) = msg)
+
+let rec part_inv_hacl #l msg =
+  match l with
+  | 0 -> ()
+  | _ ->
+    let inp = inp_hacl_to_vale msg in
+    let lst = if l % 16 = 0 then 16 else l % 16 in
+    let rem = l - lst in
+    rem_prop_1 #l #lst #rem inp;
+    rem_prop_2 #l #lst #rem msg;
+    let prev_msg = sub msg 0 rem in
+    part_inv_hacl #rem prev_msg;
+    admit () // TODO: Still need to prove this
+
 val inp_equivalence :
   #l:size_t ->
   inp:vale_msg l ->
@@ -183,6 +205,5 @@ val inp_equivalence :
          (inp_vale_to_hacl #l inp) = msg)
 
 let rec inp_equivalence #l inp msg =
-  match l with
-  | 0 -> ()
-  | _ -> admit ()
+  part_inv_vale inp;
+  part_inv_hacl msg
