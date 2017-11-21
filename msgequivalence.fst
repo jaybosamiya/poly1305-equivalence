@@ -59,13 +59,6 @@ val eq_nat_from_intseq:
   Lemma (a = b <==> nat_from_intseq_le a = nat_from_intseq_le b)
 let eq_nat_from_intseq #t #len a b = admit ()
 
-    assume
-(** Assumption: An [append] function is provided by the API *)
-val append: #len1:size_t -> #len2:size_t ->
-  #len:size_t{len=len1+len2} -> s1:lbytes len1 -> s2:lbytes len2 ->
-  s:lbytes len{(sub s 0 len1 = s1) /\
-               (sub s len1 len2 = s2)}
-
 (** Property: the subseq of subseq is a subseq *)
 val sub_of_sub_property:
   #t:inttype -> #len:size_t ->
@@ -77,6 +70,13 @@ val sub_of_sub_property:
          sub s start n = sub (sub s start' n') (start - start') n)
     [SMTPat (sub s start n)]
 let sub_of_sub_property #a #len s start n = ()
+
+    assume
+(** Assumption: An [append] function is provided by the API *)
+val append: #len1:size_t -> #len2:size_t ->
+  #len:size_t{len=len1+len2} -> s1:lbytes len1 -> s2:lbytes len2 ->
+  s:lbytes len{(sub s 0 len1 = s1) /\
+               (sub s len1 len2 = s2)}
 
 type vale_msg (l:nat) = a:(int->nat128){a (l / 16) < pow2 (8 `op_Multiply` (l % 16))}
 type hacl_msg (l:size_t) = lbytes l
@@ -134,6 +134,9 @@ val inp_equivalence :
   msg:hacl_msg l ->
   Lemma ((inp_hacl_to_vale #l msg) = inp <==>
          (inp_vale_to_hacl #l inp) = msg)
+
+        (* Need to increase limits to have the proofs go through *)
+        #set-options "--z3rlimit 50"
 
 let rec inp_equivalence #l inp msg =
   match l with
