@@ -20,24 +20,24 @@ open Spec.Lib.IntSeq
 
 (* First, a bunch of axioms and properties that we will use *)
 
-(** Axiom: [intseq]s have equality *)
-val intseq_type_eq: t:inttype -> len:size_t ->
-  Lemma (hasEq (intseq t len))
-    [SMTPat (intseq t len)]
-let intseq_type_eq t len = admit ()
-
 (** Axiom: [uint_t]s can be equality compared *)
 val uint_t_eq: t:inttype ->
   Lemma (hasEq (uint_t t))
     [SMTPat (uint_t t)]
 let uint_t_eq t = admit ()
 
+(** Axiom: [intseq]s have equality *)
+val intseq_type_eq: t:inttype -> len:size_t ->
+  Lemma (hasEq (intseq t len))
+    [SMTPat (intseq t len)]
+let intseq_type_eq t len = admit ()
+
 (** Axiom: Two sequences are equal iff all their elements are equal *)
-val intseq_eq: #t:inttype -> #len:size_t -> a:intseq t len -> b:intseq t len ->
-  Lemma ((a = b) <==>
-         (forall x. a.[x] = b.[x]))
-    [SMTPat (a = b)]
-let intseq_eq #t #len a b = admit ()
+val intseq_eq: t:inttype -> len:size_t ->
+  Lemma (forall (a:intseq t len) (b:intseq t len).
+                                   (a = b) <==> (forall x. a.[x] = b.[x]))
+    [SMTPat (intseq t len)]
+let intseq_eq t len = admit ()
 
 (** Axiom: Subsequence actually gives us the subsequence *)
 val sub_semantics:
@@ -73,10 +73,7 @@ val sub_of_sub_property:
   start:size_t -> n:size_t{start + n <= len} ->
   start':size_t{start' > start} -> n':size_t{start' + n' <= start + n} ->
 Lemma (sub s start' n' = sub (sub s start n) (start' - start) n')
-let sub_of_sub_property #a #len s start n start' n' =
-  intseq_eq
-    (sub s start' n')
-    (sub (sub s start n) (start' - start) n')
+let sub_of_sub_property #a #len s start n start' n' = ()
 
 type vale_msg (l:nat) = a:(int->nat128){a (l / 16) < pow2 (8 `op_Multiply` (l % 16))}
 type hacl_msg (l:size_t) = lbytes l
@@ -135,7 +132,6 @@ val inp_equivalence :
 
 let rec inp_equivalence #l inp msg =
   vale_msg_eq (inp_hacl_to_vale #l msg) inp;
-  intseq_eq (inp_vale_to_hacl #l inp) msg; (* just to have equality act nice *)
   match l with
   | 0 -> ()
   | _ -> admit ()
