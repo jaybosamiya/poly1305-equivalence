@@ -18,36 +18,68 @@ type nat128 = ValeSpec.nat128
 open Spec.Lib.IntTypes
 open Spec.Lib.IntSeq
 
-(* Allow equality for lseqs *)
-val lseq_eq: a:Type -> len:size_t ->
-  Lemma (hasEq (lseq a len))
-    [SMTPat (lseq a len)]
-let lseq_eq a len = admit ()
+(* First, a bunch of axioms and properties that we will use *)
 
-(* We make the equality same as checking whether the number encoded is the same *)
+(** Axiom: [intseq]s have equality *)
+val intseq_type_eq: t:inttype -> len:size_t ->
+  Lemma (hasEq (intseq t len))
+    [SMTPat (intseq t len)]
+let intseq_type_eq t len = admit ()
+
+(** Axiom: [uint_t]s can be equality compared *)
+val uint_t_eq: t:inttype ->
+  Lemma (hasEq (uint_t t))
+    [SMTPat (uint_t t)]
+let uint_t_eq t = admit ()
+
+(** Axiom: Two sequences are equal iff all their elements are equal *)
 val intseq_eq: #t:inttype -> #len:size_t -> a:intseq t len -> b:intseq t len ->
   Lemma ((a = b) <==>
-         (nat_from_intseq_le a = nat_from_intseq_le b))
+         (forall x. a.[x] = b.[x]))
     [SMTPat (a = b)]
 let intseq_eq #t #len a b = admit ()
 
+(** Axiom: Subsequence actually gives us the subsequence *)
+val sub_semantics:
+  #t:inttype ->
+  #len:size_t ->
+  s:intseq t len ->
+  start:size_t ->
+  n:size_t{start + n <= len} ->
+  Lemma (forall (x:size_t{x < n}). (sub s start n).[x] = s.[start + x])
+    [SMTPat (sub s start n)]
+let sub_semantics #t #len s start n = admit()
+
+(** Axiom: Two sequences are same iff their LE representation is same *)
+val eq_nat_from_intseq:
+  #t:inttype ->
+  #len:size_t ->
+  a:intseq t len ->
+  b:intseq t len ->
+  Lemma (a = b <==> nat_from_intseq_le a = nat_from_intseq_le b)
+let eq_nat_from_intseq #t #len a b = admit ()
+
     assume
-(* Let us say that an [append] function is provided by the API *)
+(** Assumption: An [append] function is provided by the API *)
 val append: #len1:size_t -> #len2:size_t ->
   #len:size_t{len=len1+len2} -> s1:lbytes len1 -> s2:lbytes len2 ->
   s:lbytes len{(sub s 0 len1 = s1) /\
                (sub s len1 len2 = s2)}
 
-(* Axiom about [sub] which tells us that a subsequence of a subsequence is itself a subsequence *)
-val sub_property:
-  #a:Type -> #len:size_t ->
-  s:lseq a len ->
+(** Property: the subseq of subseq is a subseq *)
+val sub_of_sub_property:
+  #t:inttype -> #len:size_t ->
+  s:intseq t len ->
   start:size_t -> n:size_t{start + n <= len} ->
   start':size_t{start' > start} -> n':size_t{start' + n' <= start + n} ->
 Lemma (sub s start' n' = sub (sub s start n) (start' - start) n')
-let sub_property #a #len s start n start' n' = admit ()
+let sub_of_sub_property #a #len s start n start' n' =
+  intseq_eq
+    (sub s start' n')
+    (sub (sub s start n) (start' - start) n')
 
 (* Now we actually write down the conversions *)
+
 type vale_msg (l:nat) = a:(int->nat128){a (l / 16) < pow2 (8 `op_Multiply` (l % 16))}
 type hacl_msg (l:size_t) = lbytes l
 
