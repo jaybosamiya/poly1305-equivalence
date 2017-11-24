@@ -11,7 +11,7 @@ module ValeSpec = Poly1305.Spec_s
 module HaclSpec = Spec.Poly1305
 
                   (* Need to increase limits to have the proofs go through *)
-                  #set-options "--z3rlimit 30"
+                  #set-options "--z3rlimit 100"
 
 type nat128 = ValeSpec.nat128
 
@@ -174,6 +174,25 @@ let rec part_inv_vale #l inp =
     let prev_inp = remove_last_block #l #lst #rem inp in
     part_inv_vale #rem prev_inp
 
+val lemma_inp_hacl_to_vale_last_block1 :
+  #l:size_t{l>0} ->
+#lst:size_t{(l % 16 = 0 <==> lst = 16) /\ (l % 16 <> 0 <==> lst = l % 16)} ->
+#rem:size_t{rem = l - lst} ->
+msg:hacl_msg l ->
+inp:vale_msg l{inp = inp_hacl_to_vale msg} ->
+Lemma (inp (rem/16) = nat_from_intseq_le (sub msg rem lst))
+let lemma_inp_hacl_to_vale_last_block1 #l #lst #rem msg inp = ()
+
+val lemma_inp_hacl_to_vale_last_block2 :
+  #l:size_t{l>0} ->
+#lst:size_t{(l % 16 = 0 <==> lst = 16) /\ (l % 16 <> 0 <==> lst = l % 16)} ->
+#rem:size_t{rem = l - lst} ->
+msg:hacl_msg l ->
+inp:vale_msg l{inp = inp_hacl_to_vale msg} ->
+Lemma (sub msg rem lst = nat_to_bytes_le lst (inp (rem/16)))
+let lemma_inp_hacl_to_vale_last_block2 #l #lst #rem msg inp =
+  eq_nat_from_intseq (nat_to_bytes_le lst (inp (rem/16))) (sub msg rem lst)
+
 val part_inv_hacl :
   #l:size_t ->
   msg:hacl_msg l ->
@@ -192,6 +211,14 @@ let rec part_inv_hacl #l msg =
     part_inv_hacl #rem prev_msg;
     let prev_inp = inp_hacl_to_vale prev_msg in
     assert (forall (x:size_t{x < rem/16}). prev_inp x = inp x);
+    lemma_inp_hacl_to_vale_last_block1 #l #lst #rem msg inp;
+    let cur_block = sub msg rem lst in
+    assert (inp (rem/16) = nat_from_intseq_le cur_block);
+    let msg' = inp_vale_to_hacl inp in
+    lemma_inp_hacl_to_vale_last_block2 #l #lst #rem msg inp;
+    assert (sub msg' rem lst = cur_block);
+    assert (sub msg' 0 rem = prev_msg);
+    assert (msg' = append #rem #lst #l prev_msg cur_block);
     admit () // TODO: Still need to prove this
 
 val inp_equivalence :
