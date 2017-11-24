@@ -154,7 +154,6 @@ val rem_prop_2 :
 #rem:size_t{rem = l - lst} ->
 i:hacl_msg l ->
 Lemma (inp_hacl_to_vale (sub i 0 rem) = remove_last_block #l #lst #rem (inp_hacl_to_vale i))
-
 let rem_prop_2 #l #lst #rem i =
   assert (rem % 16 = 0); // required for the prover to realize this
         ()
