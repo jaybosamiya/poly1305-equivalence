@@ -193,6 +193,35 @@ Lemma (sub msg rem lst = nat_to_bytes_le lst (inp (rem/16)))
 let lemma_inp_hacl_to_vale_last_block2 #l #lst #rem msg inp =
   eq_nat_from_intseq (nat_to_bytes_le lst (inp (rem/16))) (sub msg rem lst)
 
+val lemma_subseq :
+  #l:size_t ->
+  #a:size_t ->
+  #b:size_t{a + b = l} ->
+  x:lbytes l ->
+  y:lbytes l ->
+  Lemma (((sub x 0 a = sub y 0 a) /\
+          (sub x a b = sub y a b)) ==>
+         x = y)
+
+let lemma_subseq #l #a #b x y =
+  match ((sub x 0 a = sub y 0 a) &&
+         (sub x a b = sub y a b)) with
+  | false -> ()
+  | true ->
+    assert (forall (i:size_t{i<a}). x.[i] = y.[i]);
+    let x2 = sub x a b in
+    let y2 = sub y a b in
+    assert (forall (i:size_t{i<b}). x2.[i] = y2.[i]);
+    assert (forall (i:size_t{i<b}). x.[i+a] = y.[i+a]);
+    assert (forall (i:size_t{i+a<b+a}). x.[i+a] = y.[i+a]);
+    assert (forall (i:size_t{i+a<l}). x.[i+a] = y.[i+a]);
+    assert (forall (i:size_t{a <= i+a /\ i+a<l}). x.[i+a] = y.[i+a]);
+    assert (forall (i:size_t{a <= i+a /\ i+a<l}) (j:size_t{j=i+a}). x.[j] = y.[j]);
+    assert (forall (j:size_t{a <= j /\ j < l}) (i:size_t{i+a=j}). x.[j] = y.[j]);
+    (* assert (forall (j:size_t{a <= j /\ j < l}). x.[j] = y.[j]); // TODO: figure this out *)
+    assert (forall (i:size_t{i < l}) (j:size_t{(i < a ==> j = i) /\ (i >= a ==> i = j+a)}). x.[i] = y.[i]);
+    admit () // TODO: Still need to prove this
+
 val part_inv_hacl :
   #l:size_t ->
   msg:hacl_msg l ->
@@ -219,7 +248,7 @@ let rec part_inv_hacl #l msg =
     assert (sub msg' rem lst = cur_block);
     assert (sub msg' 0 rem = prev_msg);
     assert (msg' = append #rem #lst #l prev_msg cur_block);
-    admit () // TODO: Still need to prove this
+    lemma_subseq #l #rem #lst msg msg'
 
 val inp_equivalence :
   #l:size_t ->
