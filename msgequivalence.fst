@@ -174,23 +174,14 @@ let rec part_inv_vale #l inp =
     let prev_inp = remove_last_block #l #lst #rem inp in
     part_inv_vale #rem prev_inp
 
-val lemma_inp_hacl_to_vale_last_block1 :
-  #l:size_t{l>0} ->
-#lst:size_t{(l % 16 = 0 <==> lst = 16) /\ (l % 16 <> 0 <==> lst = l % 16)} ->
-#rem:size_t{rem = l - lst} ->
-msg:hacl_msg l ->
-inp:vale_msg l{inp = inp_hacl_to_vale msg} ->
-Lemma (inp (rem/16) = nat_from_intseq_le (sub msg rem lst))
-let lemma_inp_hacl_to_vale_last_block1 #l #lst #rem msg inp = ()
-
-val lemma_inp_hacl_to_vale_last_block2 :
+val lemma_inp_hacl_to_vale_last_block :
   #l:size_t{l>0} ->
 #lst:size_t{(l % 16 = 0 <==> lst = 16) /\ (l % 16 <> 0 <==> lst = l % 16)} ->
 #rem:size_t{rem = l - lst} ->
 msg:hacl_msg l ->
 inp:vale_msg l{inp = inp_hacl_to_vale msg} ->
 Lemma (sub msg rem lst = nat_to_bytes_le lst (inp (rem/16)))
-let lemma_inp_hacl_to_vale_last_block2 #l #lst #rem msg inp =
+let lemma_inp_hacl_to_vale_last_block #l #lst #rem msg inp =
   eq_nat_from_intseq (nat_to_bytes_le lst (inp (rem/16))) (sub msg rem lst)
 
 val lemma_subseq :
@@ -202,7 +193,6 @@ val lemma_subseq :
   Lemma (((sub x 0 a = sub y 0 a) /\
           (sub x a b = sub y a b)) ==>
          x = y)
-
 let lemma_subseq #l #a #b x y =
   match ((sub x 0 a = sub y 0 a) &&
          (sub x a b = sub y a b)) with
@@ -234,20 +224,11 @@ let rec part_inv_hacl #l msg =
     let inp = inp_hacl_to_vale msg in
     let lst = if l % 16 = 0 then 16 else l % 16 in
     let rem:size_t = l - lst in
-    rem_prop_1 #l #lst #rem inp;
     rem_prop_2 #l #lst #rem msg;
     let prev_msg = sub msg 0 rem in
     part_inv_hacl #rem prev_msg;
-    let prev_inp = inp_hacl_to_vale prev_msg in
-    assert (forall (x:size_t{x < rem/16}). prev_inp x = inp x);
-    lemma_inp_hacl_to_vale_last_block1 #l #lst #rem msg inp;
-    let cur_block = sub msg rem lst in
-    assert (inp (rem/16) = nat_from_intseq_le cur_block);
     let msg' = inp_vale_to_hacl inp in
-    lemma_inp_hacl_to_vale_last_block2 #l #lst #rem msg inp;
-    assert (sub msg' rem lst = cur_block);
-    assert (sub msg' 0 rem = prev_msg);
-    assert (msg' = append #rem #lst #l prev_msg cur_block);
+    lemma_inp_hacl_to_vale_last_block #l #lst #rem msg inp;
     lemma_subseq #l #rem #lst msg msg'
 
 val inp_equivalence :
