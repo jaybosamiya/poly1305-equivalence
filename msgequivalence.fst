@@ -11,7 +11,7 @@ module ValeSpec = Poly1305.Spec_s
 module HaclSpec = Spec.Poly1305
 
                   (* Need to increase limits to have the proofs go through *)
-                  #set-options "--z3rlimit 20"
+                  #set-options "--z3rlimit 30"
 
 type nat128 = ValeSpec.nat128
 
@@ -107,10 +107,10 @@ val remove_last_block :
 #lst:size_t{(l % 16 = 0 <==> lst = 16) /\ (l % 16 <> 0 <==> lst = l % 16)} ->
 #rem:size_t{rem = l - lst} ->
 v:vale_msg l ->
-v':vale_msg rem{forall x. v x = v' x}
+v':vale_msg rem{forall (x:size_t{x >= 0 /\ x < rem/16}). v x = v' x}
 let remove_last_block #l #lst #rem v =
   let v' : vale_msg rem =
-    fun i -> v i in
+    fun i -> if i < rem/16 then v i else 0 in
   v'
 
 val inp_vale_to_hacl : #l:size_t -> inp:vale_msg l -> Tot (msg:lbytes l)
@@ -191,8 +191,8 @@ let rec part_inv_hacl #l msg =
     let prev_msg = sub msg 0 rem in
     part_inv_hacl #rem prev_msg;
     let prev_inp = inp_hacl_to_vale prev_msg in
-    assert (forall (x:int). prev_inp x = inp x); // this seems wrong
-      admit () // TODO: Still need to prove this
+    assert (forall (x:size_t{x < rem/16}). prev_inp x = inp x);
+    admit () // TODO: Still need to prove this
 
 val inp_equivalence :
   #l:size_t ->
