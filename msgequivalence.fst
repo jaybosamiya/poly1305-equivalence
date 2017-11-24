@@ -191,8 +191,8 @@ let rec part_inv_hacl #l msg =
     let prev_msg = sub msg 0 rem in
     part_inv_hacl #rem prev_msg;
     let prev_inp = inp_hacl_to_vale prev_msg in
-    assert (forall x. prev_inp x = inp x);
-    admit () // TODO: Still need to prove this
+    assert (forall (x:int). prev_inp x = inp x); // this seems wrong
+      admit () // TODO: Still need to prove this
 
 val inp_equivalence :
   #l:size_t ->
