@@ -140,21 +140,13 @@ let inp_hacl_to_vale #l msg =
       nat_from_intseq_le (sub msg start len) in
   inp
 
-val rem_prop_1 :
-  #l:size_t{l > 0} ->
-#lst:size_t{(l % 16 = 0 <==> lst = 16) /\ (l % 16 <> 0 <==> lst = l % 16)} ->
-#rem:size_t{rem = l - lst} ->
-v:vale_msg l ->
-Lemma (sub (inp_vale_to_hacl v) 0 rem = inp_vale_to_hacl (remove_last_block #l #lst #rem v))
-let rem_prop_1 #l #lst #rem v = ()
-
-val rem_prop_2 :
+val rem_prop :
   #l:size_t{l > 0} ->
 #lst:size_t{(l % 16 = 0 <==> lst = 16) /\ (l % 16 <> 0 <==> lst = l % 16)} ->
 #rem:size_t{rem = l - lst} ->
 i:hacl_msg l ->
 Lemma (inp_hacl_to_vale (sub i 0 rem) = remove_last_block #l #lst #rem (inp_hacl_to_vale i))
-let rem_prop_2 #l #lst #rem i =
+let rem_prop #l #lst #rem i =
   assert (rem % 16 = 0); // required for the prover to realize this
         ()
 
@@ -169,8 +161,7 @@ let rec part_inv_vale #l inp =
     let msg = inp_vale_to_hacl inp in
     let lst = if l % 16 = 0 then 16 else l % 16 in
     let rem = l - lst in
-    rem_prop_1 #l #lst #rem inp;
-    rem_prop_2 #l #lst #rem msg;
+    rem_prop #l #lst #rem msg;
     let prev_inp = remove_last_block #l #lst #rem inp in
     part_inv_vale #rem prev_inp
 
@@ -224,7 +215,7 @@ let rec part_inv_hacl #l msg =
     let inp = inp_hacl_to_vale msg in
     let lst = if l % 16 = 0 then 16 else l % 16 in
     let rem:size_t = l - lst in
-    rem_prop_2 #l #lst #rem msg;
+    rem_prop #l #lst #rem msg;
     let prev_msg = sub msg 0 rem in
     part_inv_hacl #rem prev_msg;
     let msg' = inp_vale_to_hacl inp in
