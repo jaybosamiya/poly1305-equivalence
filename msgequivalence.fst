@@ -192,16 +192,9 @@ let lemma_subseq #l #a #b x y =
     assert (forall (i:size_t{i<a}). x.[i] = y.[i]);
     let x2 = sub x a b in
     let y2 = sub y a b in
-    assert (forall (i:size_t{i<b}). x2.[i] = y2.[i]);
     assert (forall (i:size_t{i<b}). x.[i+a] = y.[i+a]);
-    assert (forall (i:size_t{i+a<b+a}). x.[i+a] = y.[i+a]);
-    assert (forall (i:size_t{i+a<l}). x.[i+a] = y.[i+a]);
-    assert (forall (i:size_t{a <= i+a /\ i+a<l}). x.[i+a] = y.[i+a]);
-    assert (forall (i:size_t{a <= i+a /\ i+a<l}) (j:size_t{j=i+a}). x.[j] = y.[j]);
-    assert (forall (j:size_t{a <= j /\ j < l}) (i:size_t{i+a=j}). x.[j] = y.[j]);
-    (* assert (forall (j:size_t{a <= j /\ j < l}). x.[j] = y.[j]); // TODO: figure this out *)
-    assert (forall (i:size_t{i < l}) (j:size_t{(i < a ==> j = i) /\ (i >= a ==> i = j+a)}). x.[i] = y.[i]);
-    admit () // TODO: Still need to prove this
+    assert (forall (j:size_t{a <= j /\ j < l}). x.[(j-a)+a] = y.[j]); // the [(j-a)+a] is required to push the proof through
+    ()
 
 val part_inv_hacl :
   #l:size_t ->
