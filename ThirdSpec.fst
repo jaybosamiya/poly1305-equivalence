@@ -20,13 +20,13 @@ type elem = e:nat{e < prime}
 let encode_r (r:nat128) : nat128 =
   logand #128 r 0x0ffffffc0ffffffc0ffffffc0fffffff
 
-let rec poly #l (r:nat128) (inp:msg l) (k:nat) : elem =
-  match k with
+let rec poly #l (r:nat128) (inp:msg l) (i:nat) : elem =
+  match i with
   | 0 -> 0
   | _ ->
-    let kk = k - 1 in
+    let kk = i - 1 in
     let hh = poly r inp kk in
-    let pad = if k = (l/16) + 1 then pow2((l % 16) * 8) else nat128_max in
+    let pad = if i = (l/16) + 1 then pow2((l % 16) * 8) else nat128_max in
     ((hh + pad + inp kk) * r) % prime
 
 let finish (a:elem) (s:nat128) : tag =
@@ -35,8 +35,8 @@ let finish (a:elem) (s:nat128) : tag =
 let poly1305 #l (k:key) (inp:msg l) : tag =
   let r, s = k in
   let r = encode_r r in
-  let k = if l % 16 = 0 then l/16 else (l/16) + 1 in
-  let a = poly #l r inp k in
+  let i = if l % 16 = 0 then l/16 else (l/16) + 1 in
+  let a = poly #l r inp i in
   finish a s
 
 (** Now, all the equivalences *)
@@ -45,6 +45,16 @@ module ValeSpec = Poly1305.Spec_s
 module HaclSpec = Spec.Poly1305
 open Spec.Lib.IntTypes
 open Spec.Lib.IntSeq
+
+     (* Need to increase limits to have the proofs go through *)
+     #set-options "--z3rlimit 5"
+
+(** Axiom: [nat_from_bytes_le] is same as [nat_from_intseq_le] *)
+val bytes_intseq_equiv :
+  #len:size_t -> b:lbytes len ->
+  Lemma (nat_from_bytes_le b = nat_from_intseq_le b)
+    [SMTPat (nat_from_bytes_le b)]
+let bytes_intseq_equiv #len b = admit ()
 
 (** Equivalence for [encode_r] *)
 
@@ -77,12 +87,12 @@ val poly_vale :
   len:size_t ->
   r:nat128 ->
   inp:msg len ->
-  k:nat ->
+  i:nat ->
   Lemma (
     vale_last_block len inp r
-      (ValeSpec.poly1305_hash_blocks 0 nat128_max r inp k) == poly #len r inp k)
+      (ValeSpec.poly1305_hash_blocks 0 nat128_max r inp i) == poly #len r inp i)
 
-let poly_vale len r inp k = admit () // TODO: Prove
+let poly_vale len r inp i = admit () // TODO: Prove
 
 (** Equivalence for [finish] *)
 
@@ -116,4 +126,4 @@ val poly1305_vale :
   Lemma (
     ValeSpec.poly1305_hash r s inp len == poly1305 (r, s) inp)
 
-let poly1305_vale len r s inp = admit ()
+let poly1305_vale len r s inp = admit () // TODO: Prove
