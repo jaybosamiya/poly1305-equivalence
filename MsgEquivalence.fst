@@ -17,35 +17,9 @@ type nat128 = ValeSpec.nat128
 
 open Spec.Lib.IntTypes
 open Spec.Lib.IntSeq
+open Axioms
 
 (* First, a bunch of axioms and properties that we will use *)
-
-(** Axiom: Two sequences are equal iff all their elements are equal *)
-val intseq_eq: t:inttype -> len:size_t ->
-  Lemma (forall (a:intseq t len) (b:intseq t len).
-                                   (a == b) <==> (forall x. a.[x] == b.[x]))
-    [SMTPat (intseq t len)]
-let intseq_eq t len = admit ()
-
-(** Axiom: Subsequence actually gives us the subsequence *)
-val sub_semantics:
-  #t:inttype ->
-  #len:size_t ->
-  s:intseq t len ->
-  start:size_t ->
-  n:size_t{start + n <= len} ->
-  Lemma (forall (x:size_t{x < n}). (sub s start n).[x] == s.[start + x])
-    [SMTPat (sub s start n)]
-let sub_semantics #t #len s start n = admit()
-
-(** Axiom: Two sequences are same iff their LE representation is same *)
-val eq_nat_from_intseq:
-  #t:inttype ->
-  #len:size_t ->
-  a:intseq t len ->
-  b:intseq t len ->
-  Lemma (a == b <==> nat_from_intseq_le a == nat_from_intseq_le b)
-let eq_nat_from_intseq #t #len a b = admit ()
 
 (** Property: the subseq of subseq is a subseq *)
 val sub_of_sub_property:
@@ -57,19 +31,19 @@ val sub_of_sub_property:
        (n':size_t{start + n <= start' + n' /\ start' + n' <= len}).
          sub s start n == sub (sub s start' n') (start - start') n)
     [SMTPat (sub s start n)]
-let sub_of_sub_property #a #len s start n = ()
-
-    assume
-(** Assumption: An [append] function is provided by the API *)
-val append: #len1:size_t -> #len2:size_t ->
-  #len:size_t{len=len1+len2} -> s1:lbytes len1 -> s2:lbytes len2 ->
-  s:lbytes len{(sub s 0 len1 == s1) /\
-               (sub s len1 len2 == s2)}
+let sub_of_sub_property #t #len s start n = 
+  let f (start':size_t{start' <= start})
+      (n':size_t{start + n <= start' + n' /\ start' + n' <= len}) :
+    Lemma (sub s start n == sub (sub s start' n') (start - start') n) =
+    sub_semantics s start n;
+    let s' = sub_semantics s start' n'; sub s start' n' in
+    sub_semantics s' (start - start') n in
+  FStar.Classical.forall_intro_2 f
 
 type vale_msg (l:nat) = a:(int->nat128){l % 16 <> 0 ==> a (l / 16) < pow2 (8 `op_Multiply` (l % 16))}
 type hacl_msg (l:size_t) = lbytes l
 
-(** Axiom: Two [vale_msg]s are equal iff all their values are equal
+(** Definitionally: Two [vale_msg]s are equal iff all their values are equal
     (in the ranges that matter) *)
 val vale_msg_eq:
   #l:nat ->
@@ -129,7 +103,7 @@ val rem_prop :
 i:hacl_msg l ->
 Lemma (inp_hacl_to_vale (sub i 0 rem) == remove_last_block #l #lst #rem (inp_hacl_to_vale i))
 let rem_prop #l #lst #rem i =
-  assert (rem % 16 = 0); // required for the prover to realize this
+  // assert (rem % 16 = 0); // (sometimes) required for the prover to realize this
         ()
 
 val part_inv_vale :
@@ -141,7 +115,7 @@ let rec part_inv_vale #l inp =
   | 0 -> ()
   | _ ->
     let msg = inp_vale_to_hacl inp in
-    let lst = if l % 16 = 0 then 16 else l % 16 in
+    let (lst:size_t{lst <= 16 /\ lst <= l}) = if l % 16 = 0 then 16 else l % 16 in
     let rem = l - lst in
     rem_prop #l #lst #rem msg;
     let prev_inp = remove_last_block #l #lst #rem inp in
@@ -168,12 +142,13 @@ val lemma_subseq :
             (sub x a b == sub y a b)))
     (ensures x == y)
 let lemma_subseq #l #a #b x y =
+  sub_semantics x 0 a;
+  sub_semantics y 0 a;
   assert (forall (i:size_t{i<a}). x.[i] == y.[i]);
-  let x2 = sub x a b in
-  let y2 = sub y a b in
+  sub_semantics x a b;
+  sub_semantics y a b;
   assert (forall (i:size_t{i<b}). x.[i+a] == y.[i+a]);
-  assert (forall (j:size_t{a <= j /\ j < l}). x.[(j-a)+a] == y.[j]); // the [(j-a)+a] is required to push the proof through
-    ()
+  assert (forall (j:size_t{a <= j /\ j < l}). x.[(j-a)+a] == y.[j]) // the [(j-a)+a] is required to push the proof through
 
 val part_inv_hacl :
   #l:size_t ->
