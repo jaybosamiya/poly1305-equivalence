@@ -4,7 +4,7 @@ module MsgEquivalence
     specs.
 
     Defines [inp_vale_to_hacl] and [inp_hacl_to_vale] to convert
-    between the two keys, and [inp_equivalence] lemma proves that they
+    between the two inputs, and [inp_equivalence] lemma proves that they
     are equivalent. *)
 
 module ValeSpec = Poly1305.Spec_s
