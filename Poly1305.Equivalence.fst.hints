@@ -1,31 +1,9 @@
 [
-  "¥EbUàÑµÚžØ‰1'(Y¶",
+  "à\u001bæÓ?\u000f¥#’ï¨£ûaõ2",
   [
     [
       "Poly1305.Equivalence.spec_equal",
       1,
-      2,
-      1,
-      [ "@query", "assumption_Prims.HasEq_int" ],
-      0
-    ],
-    [
-      "Poly1305.Equivalence.spec_equal",
-      2,
-      2,
-      1,
-      [
-        "@query", "equality_tok_Spec.Lib.IntTypes.U8@tok",
-        "equation_Spec.Poly1305.blocksize", "equation_Spec.Poly1305.tag",
-        "function_token_typing_Spec.Poly1305.blocksize",
-        "lemma_MsgEquivalence.intseq_type_eq",
-        "typing_tok_Spec.Lib.IntTypes.U8@tok"
-      ],
-      0
-    ],
-    [
-      "Poly1305.Equivalence.spec_equal",
-      3,
       2,
       1,
       [
@@ -36,47 +14,7 @@
     ],
     [
       "Poly1305.Equivalence.spec_equal",
-      4,
       2,
-      1,
-      [
-        "@query", "equality_tok_Spec.Lib.IntTypes.U8@tok",
-        "equation_Spec.Poly1305.key", "equation_Spec.Poly1305.keysize",
-        "function_token_typing_Spec.Poly1305.keysize",
-        "lemma_MsgEquivalence.intseq_type_eq",
-        "typing_tok_Spec.Lib.IntTypes.U8@tok"
-      ],
-      0
-    ],
-    [
-      "Poly1305.Equivalence.spec_equal",
-      5,
-      2,
-      1,
-      [
-        "@query", "assumption_Prims.HasEq_int",
-        "equation_Poly1305.Spec_s.nat128_max",
-        "haseqPoly1305.Equivalence_Tm_refine_ad993223f85b707ef5854ea4ee742a0d"
-      ],
-      0
-    ],
-    [
-      "Poly1305.Equivalence.spec_equal",
-      6,
-      2,
-      1,
-      [
-        "@query", "equality_tok_Spec.Lib.IntTypes.U8@tok",
-        "equation_Spec.Poly1305.blocksize", "equation_Spec.Poly1305.tag",
-        "function_token_typing_Spec.Poly1305.blocksize",
-        "lemma_MsgEquivalence.intseq_type_eq",
-        "typing_tok_Spec.Lib.IntTypes.U8@tok"
-      ],
-      0
-    ],
-    [
-      "Poly1305.Equivalence.spec_equal",
-      7,
       2,
       1,
       [
@@ -103,7 +41,7 @@
     ],
     [
       "Poly1305.Equivalence.spec_equal",
-      8,
+      3,
       2,
       1,
       [
