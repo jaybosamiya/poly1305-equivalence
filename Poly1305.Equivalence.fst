@@ -23,10 +23,10 @@ val spec_equal :
   k:key ->
   t1:tag{t1=HaclSpec.poly1305 len1 msg k} ->
   Lemma
-    (requires
-       (len = len1) /\
-     (k = KeyEquivalence.key_vale_to_hacl key_r key_s) /\
-     (inp == MsgEquivalence.inp_hacl_to_vale #len1 msg))
-    (ensures
-       True // TODO: Show tags are equivalent here
-    )
+    (requires (
+        (len = len1) /\
+        (k = KeyEquivalence.key_vale_to_hacl key_r key_s) /\
+        (inp == MsgEquivalence.inp_hacl_to_vale #len1 msg)))
+    (ensures (
+        (t = TagEquivalence.tag_hacl_to_vale t1) /\
+        (t1 = TagEquivalence.tag_vale_to_hacl t)))
