@@ -111,7 +111,7 @@
     [
       "KeyEquivalence.divmod_lemma",
       4,
-      4,
+      2,
       2,
       [
         "@MaxIFuel_assumption", "@query",
@@ -269,7 +269,8 @@
         "KeyEquivalence_interpretation_Tm_arrow_99a97856e16d4f1b5fc3e9d030fbef6b",
         "KeyEquivalence_interpretation_Tm_arrow_e18080d10893b411bf00174350e98785",
         "Prims_pretyping_ae567c2fb75be05905677af440075565",
-        "assumption_Prims.HasEq_int", "equation_Prims.nat",
+        "assumption_Prims.HasEq_int", "constructor_distinct_BoxInt",
+        "constructor_distinct_Tm_unit", "equation_Prims.nat",
         "equation_Spec.Lib.IntTypes.max_size_t",
         "equation_Spec.Lib.IntTypes.size_t",
         "fuel_guarded_inversion_Spec.Lib.IntTypes.inttype",
