@@ -20,22 +20,10 @@ open Spec.Lib.IntSeq
 
 (* First, a bunch of axioms and properties that we will use *)
 
-(** Axiom: [uint_t]s can be equality compared *)
-val uint_t_eq: t:inttype ->
-  Lemma (hasEq (uint_t t))
-    [SMTPat (uint_t t)]
-let uint_t_eq t = admit ()
-
-(** Axiom: [intseq]s have equality *)
-val intseq_type_eq: t:inttype -> len:size_t ->
-  Lemma (hasEq (intseq t len))
-    [SMTPat (intseq t len)]
-let intseq_type_eq t len = admit ()
-
 (** Axiom: Two sequences are equal iff all their elements are equal *)
 val intseq_eq: t:inttype -> len:size_t ->
   Lemma (forall (a:intseq t len) (b:intseq t len).
-                                   (a = b) <==> (forall x. a.[x] = b.[x]))
+                                   (a == b) <==> (forall x. a.[x] == b.[x]))
     [SMTPat (intseq t len)]
 let intseq_eq t len = admit ()
 
@@ -46,7 +34,7 @@ val sub_semantics:
   s:intseq t len ->
   start:size_t ->
   n:size_t{start + n <= len} ->
-  Lemma (forall (x:size_t{x < n}). (sub s start n).[x] = s.[start + x])
+  Lemma (forall (x:size_t{x < n}). (sub s start n).[x] == s.[start + x])
     [SMTPat (sub s start n)]
 let sub_semantics #t #len s start n = admit()
 
@@ -56,7 +44,7 @@ val eq_nat_from_intseq:
   #len:size_t ->
   a:intseq t len ->
   b:intseq t len ->
-  Lemma (a = b <==> nat_from_intseq_le a = nat_from_intseq_le b)
+  Lemma (a == b <==> nat_from_intseq_le a == nat_from_intseq_le b)
 let eq_nat_from_intseq #t #len a b = admit ()
 
 (** Property: the subseq of subseq is a subseq *)
@@ -67,7 +55,7 @@ val sub_of_sub_property:
   Lemma
     (forall (start':size_t{start' <= start})
        (n':size_t{start + n <= start' + n' /\ start' + n' <= len}).
-         sub s start n = sub (sub s start' n') (start - start') n)
+         sub s start n == sub (sub s start' n') (start - start') n)
     [SMTPat (sub s start n)]
 let sub_of_sub_property #a #len s start n = ()
 
@@ -75,17 +63,11 @@ let sub_of_sub_property #a #len s start n = ()
 (** Assumption: An [append] function is provided by the API *)
 val append: #len1:size_t -> #len2:size_t ->
   #len:size_t{len=len1+len2} -> s1:lbytes len1 -> s2:lbytes len2 ->
-  s:lbytes len{(sub s 0 len1 = s1) /\
-               (sub s len1 len2 = s2)}
+  s:lbytes len{(sub s 0 len1 == s1) /\
+               (sub s len1 len2 == s2)}
 
 type vale_msg (l:nat) = a:(int->nat128){l % 16 <> 0 ==> a (l / 16) < pow2 (8 `op_Multiply` (l % 16))}
 type hacl_msg (l:size_t) = lbytes l
-
-(** Axiom: [vale_msg]s have equality *)
-val vale_msg_type_eq: #l:nat ->
-  Lemma (hasEq (vale_msg l))
-    [SMTPat (vale_msg l)]
-let vale_msg_type_eq #l = admit ()
 
 (** Axiom: Two [vale_msg]s are equal iff all their values are equal
     (in the ranges that matter) *)
@@ -94,7 +76,7 @@ val vale_msg_eq:
   Lemma (
     forall (a:vale_msg l)
       (b:vale_msg l).
-        a = b <==>
+        a == b <==>
     ((forall (x:int{x >= 0 /\ x < (l/16)}). a x = b x) /\
      (l % 16 <> 0 ==> a (l/16) = b (l/16))))
     [SMTPat (vale_msg l)]
@@ -145,7 +127,7 @@ val rem_prop :
 #lst:size_t{(l % 16 = 0 <==> lst = 16) /\ (l % 16 <> 0 <==> lst = l % 16)} ->
 #rem:size_t{rem = l - lst} ->
 i:hacl_msg l ->
-Lemma (inp_hacl_to_vale (sub i 0 rem) = remove_last_block #l #lst #rem (inp_hacl_to_vale i))
+Lemma (inp_hacl_to_vale (sub i 0 rem) == remove_last_block #l #lst #rem (inp_hacl_to_vale i))
 let rem_prop #l #lst #rem i =
   assert (rem % 16 = 0); // required for the prover to realize this
         ()
@@ -153,7 +135,7 @@ let rem_prop #l #lst #rem i =
 val part_inv_vale :
   #l:size_t ->
   inp:vale_msg l ->
-  Lemma (inp_hacl_to_vale (inp_vale_to_hacl inp) = inp)
+  Lemma (inp_hacl_to_vale (inp_vale_to_hacl inp) == inp)
 let rec part_inv_vale #l inp =
   match l with
   | 0 -> ()
@@ -170,8 +152,8 @@ val lemma_inp_hacl_to_vale_last_block :
 #lst:size_t{(l % 16 = 0 <==> lst = 16) /\ (l % 16 <> 0 <==> lst = l % 16)} ->
 #rem:size_t{rem = l - lst} ->
 msg:hacl_msg l ->
-inp:vale_msg l{inp = inp_hacl_to_vale msg} ->
-Lemma (sub msg rem lst = nat_to_bytes_le lst (inp (rem/16)))
+inp:vale_msg l{inp == inp_hacl_to_vale msg} ->
+Lemma (sub msg rem lst == nat_to_bytes_le lst (inp (rem/16)))
 let lemma_inp_hacl_to_vale_last_block #l #lst #rem msg inp =
   eq_nat_from_intseq (nat_to_bytes_le lst (inp (rem/16))) (sub msg rem lst)
 
@@ -181,25 +163,22 @@ val lemma_subseq :
   #b:size_t{a + b = l} ->
   x:lbytes l ->
   y:lbytes l ->
-  Lemma (((sub x 0 a = sub y 0 a) /\
-          (sub x a b = sub y a b)) ==>
-         x = y)
+  Lemma (requires
+           ((sub x 0 a == sub y 0 a) /\
+            (sub x a b == sub y a b)))
+    (ensures x == y)
 let lemma_subseq #l #a #b x y =
-  match ((sub x 0 a = sub y 0 a) &&
-         (sub x a b = sub y a b)) with
-  | false -> ()
-  | true ->
-    assert (forall (i:size_t{i<a}). x.[i] = y.[i]);
-    let x2 = sub x a b in
-    let y2 = sub y a b in
-    assert (forall (i:size_t{i<b}). x.[i+a] = y.[i+a]);
-    assert (forall (j:size_t{a <= j /\ j < l}). x.[(j-a)+a] = y.[j]); // the [(j-a)+a] is required to push the proof through
+  assert (forall (i:size_t{i<a}). x.[i] == y.[i]);
+  let x2 = sub x a b in
+  let y2 = sub y a b in
+  assert (forall (i:size_t{i<b}). x.[i+a] == y.[i+a]);
+  assert (forall (j:size_t{a <= j /\ j < l}). x.[(j-a)+a] == y.[j]); // the [(j-a)+a] is required to push the proof through
     ()
 
 val part_inv_hacl :
   #l:size_t ->
   msg:hacl_msg l ->
-  Lemma (inp_vale_to_hacl (inp_hacl_to_vale msg) = msg)
+  Lemma (inp_vale_to_hacl (inp_hacl_to_vale msg) == msg)
 
 let rec part_inv_hacl #l msg =
   match l with
@@ -219,8 +198,8 @@ val inp_equivalence :
   #l:size_t ->
   inp:vale_msg l ->
   msg:hacl_msg l ->
-  Lemma ((inp_hacl_to_vale #l msg) = inp <==>
-         (inp_vale_to_hacl #l inp) = msg)
+  Lemma ((inp_hacl_to_vale #l msg) == inp <==>
+         (inp_vale_to_hacl #l inp) == msg)
 
 let rec inp_equivalence #l inp msg =
   part_inv_vale inp;
