@@ -20,7 +20,6 @@ val sub_semantics:
   start:size_t ->
   n:size_t{start + n <= len} ->
   Lemma (forall (x:size_t{x < n}). (sub s start n).[x] == s.[start + x])
-  //    [SMTPat (sub s start n)]
 let sub_semantics #t #len s start n = admit()
 
 (** Axiom: Two sequences are same iff their LE representation is same *)
