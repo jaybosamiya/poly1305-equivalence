@@ -22,6 +22,16 @@ val sub_semantics:
   Lemma (forall (x:size_t{x < n}). (sub s start n).[x] == s.[start + x])
 let sub_semantics #t #len s start n = admit()
 
+(** Axiom: Slice gives us the correct subsequence *)
+val slice_semantics:
+  #t:inttype ->
+  #len:size_t ->
+  s:intseq t len ->
+  start:size_t ->
+  fin:size_t{start <= fin /\ fin <= len} ->
+  Lemma (slice s start fin == sub s start (fin - start))
+let slice_semantics #t #len s start fin = admit ()
+
 (** Axiom: Two sequences are same iff their LE representation is same *)
 val eq_nat_from_intseq:
   #t:inttype ->
