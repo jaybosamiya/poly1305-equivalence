@@ -1,2 +1,6 @@
-update-all-hints :
-	fstar --use_hints --record_hints KeyEquivalence.fst MsgEquivalence.fst Poly1305.Equivalence.fst TagEquivalence.fst ThirdSpec.fst
+update-all-existing-hints : $(patsubst %.fst.hints,%.phony,$(wildcard *.fst.hints))
+
+gen-all : Axioms.phony KeyEquivalence.phony MsgEquivalence.phony Poly1305.Equivalence.phony TagEquivalence.phony ThirdSpec.phony
+
+%.phony :
+	fstar --use_hints --record_hints $(patsubst %.phony,%.fst,$@)
