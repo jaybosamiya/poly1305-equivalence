@@ -18,27 +18,9 @@ type nat128 = ValeSpec.nat128
 open Spec.Lib.IntTypes
 open Spec.Lib.IntSeq
 open Axioms
+open UsefulLemmas
 
 (* First, a bunch of axioms and properties that we will use *)
-
-(** Property: the subseq of subseq is a subseq *)
-val sub_of_sub_property:
-  #t:inttype -> #len:size_t ->
-  s:intseq t len ->
-  start:size_t -> n:size_t{start + n <= len} ->
-  Lemma
-    (forall (start':size_t{start' <= start})
-       (n':size_t{start + n <= start' + n' /\ start' + n' <= len}).
-         sub s start n == sub (sub s start' n') (start - start') n)
-    [SMTPat (sub s start n)]
-let sub_of_sub_property #t #len s start n = 
-  let f (start':size_t{start' <= start})
-      (n':size_t{start + n <= start' + n' /\ start' + n' <= len}) :
-    Lemma (sub s start n == sub (sub s start' n') (start - start') n) =
-    sub_semantics s start n;
-    let s' = sub_semantics s start' n'; sub s start' n' in
-    sub_semantics s' (start - start') n in
-  FStar.Classical.forall_intro_2 f
 
 type vale_msg (l:nat) = a:(int->nat128){l % 16 <> 0 ==> a (l / 16) < pow2 (8 `op_Multiply` (l % 16))}
 type hacl_msg (l:size_t) = lbytes l
@@ -131,25 +113,6 @@ Lemma (sub msg rem lst == nat_to_bytes_le lst (inp (rem/16)))
 let lemma_inp_hacl_to_vale_last_block #l #lst #rem msg inp =
   eq_nat_from_intseq (nat_to_bytes_le lst (inp (rem/16))) (sub msg rem lst)
 
-val lemma_subseq :
-  #l:size_t ->
-  #a:size_t ->
-  #b:size_t{a + b = l} ->
-  x:lbytes l ->
-  y:lbytes l ->
-  Lemma (requires
-           ((sub x 0 a == sub y 0 a) /\
-            (sub x a b == sub y a b)))
-    (ensures x == y)
-let lemma_subseq #l #a #b x y =
-  sub_semantics x 0 a;
-  sub_semantics y 0 a;
-  assert (forall (i:size_t{i<a}). x.[i] == y.[i]);
-  sub_semantics x a b;
-  sub_semantics y a b;
-  assert (forall (i:size_t{i<b}). x.[i+a] == y.[i+a]);
-  assert (forall (j:size_t{a <= j /\ j < l}). x.[(j-a)+a] == y.[j]) // the [(j-a)+a] is required to push the proof through
-
 val part_inv_hacl :
   #l:size_t ->
   msg:hacl_msg l ->
@@ -167,7 +130,7 @@ let rec part_inv_hacl #l msg =
     part_inv_hacl #rem prev_msg;
     let msg' = inp_vale_to_hacl inp in
     lemma_inp_hacl_to_vale_last_block #l #lst #rem msg inp;
-    lemma_subseq #l #rem #lst msg msg'
+    subs_eq #l #rem #lst msg msg'
 
 val inp_equivalence :
   #l:size_t ->

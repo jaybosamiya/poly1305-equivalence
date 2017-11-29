@@ -46,7 +46,7 @@ let part_inv_hacl k =
   eq_nat_from_intseq s s0;
   assert (r == r0);
   assert (s == s0);
-  MsgEquivalence.lemma_subseq #32 #16 #16 k k' // TODO: Move this property into a separate file and then use it here
+  UsefulLemmas.subs_eq #32 #16 #16 k k'
 
 val part_inv_vale :
   r:nat128 ->
