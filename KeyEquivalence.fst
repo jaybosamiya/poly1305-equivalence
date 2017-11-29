@@ -39,13 +39,10 @@ let part_inv_hacl k =
   let r = slice_semantics k 0 16; slice k 0 16 in
   let s = slice_semantics k 16 32; slice k 16 32 in
   let r', s' = nat_from_intseq_le r, nat_from_intseq_le s in
-  assert ((r', s') = key_hacl_to_vale k);
   let k' = key_vale_to_hacl r' s' in
   let r0, s0 = sub k' 0 16, sub k' 16 16 in
   eq_nat_from_intseq r r0;
   eq_nat_from_intseq s s0;
-  assert (r == r0);
-  assert (s == s0);
   UsefulLemmas.subs_eq #32 #16 #16 k k'
 
 val part_inv_vale :
@@ -53,7 +50,10 @@ val part_inv_vale :
   s:nat128 ->
   Lemma ((r,s) = key_hacl_to_vale (key_vale_to_hacl r s))
 
-let part_inv_vale r s = admit () // TODO: Prove
+let part_inv_vale r s =
+  let k = key_vale_to_hacl r s in
+  slice_semantics k 0 16;
+  slice_semantics k 16 32
 
 val key_equivalence :
   r:nat128 ->
