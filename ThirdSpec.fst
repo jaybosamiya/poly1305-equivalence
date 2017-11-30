@@ -92,7 +92,10 @@ val poly_vale' :
   inp:msg l ->
   Lemma ((ValeSpec.poly1305_hash_blocks 0 nat128_max r inp (len/16)) == poly #l r inp (len/16))
 
-let poly_vale' #l len r inp = admit ()
+let rec poly_vale' #l len r inp =
+  match len with
+  | 0 -> ()
+  | _ -> poly_vale' #l (len-16) r inp
 
 val poly_vale :
   #x:nat ->
