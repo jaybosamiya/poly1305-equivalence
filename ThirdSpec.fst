@@ -84,6 +84,16 @@ let vale_last_block (len:nat) (inp:msg len) (r:nat128) (acc:elem) : elem =
     let padLast = pow2((len % 16) * 8) in
     ((acc + padLast + ((inp k) % padLast)) * r) % prime
 
+
+val poly_vale' :
+  #l:size_t ->
+  len:size_t{len%16=0 /\ len <= l} ->
+  r:nat128 ->
+  inp:msg l ->
+  Lemma ((ValeSpec.poly1305_hash_blocks 0 nat128_max r inp (len/16)) == poly #l r inp (len/16))
+
+let poly_vale' #l len r inp = admit ()
+
 val poly_vale :
   #x:nat ->
   len:size_t ->
@@ -94,7 +104,12 @@ val poly_vale :
        vale_last_block len inp r
        (ValeSpec.poly1305_hash_blocks 0 nat128_max r inp (len/16)) == poly #len r inp (len/16+x))
 
-let poly_vale #x len r inp = admit () // TODO: Prove
+let rec poly_vale #x len r inp =
+  match x with
+  | 0 -> poly_vale' #len len r inp
+  | 1 -> let b = len%16 in
+    poly_vale' #len (len-b) r inp;
+    FStar.Math.Lemmas.modulo_lemma (inp (len/16)) (pow2 (b*8))
 
 (** Equivalence for [finish] *)
 
