@@ -68,14 +68,15 @@ let encode_r_hacl r = admit () // we will just assume this for now
 (** Equivalence for [poly] *)
 
 val poly_hacl :
+  #x:nat ->
   len:size_t ->
   text:lbytes len ->
   r:nat128 ->
-  k:nat{(len%16 = 0 ==> k = len/16) /\ (len%16 <> 0 ==> k = len/16 + 1)} ->
-  Lemma (
-    HaclSpec.poly len text r == poly #len r (MsgEquivalence.inp_hacl_to_vale text) k)
+  Lemma (requires (len%16=0 ==> x=0) /\ (len%16<>0 ==> x=1))
+    (ensures
+       HaclSpec.poly len text r == poly #len r (MsgEquivalence.inp_hacl_to_vale text) (len/16+x))
 
-let poly_hacl len text r k = admit () // TODO: Prove
+let poly_hacl #x len text r = admit () // TODO: Prove
 
 let vale_last_block (len:nat) (inp:msg len) (r:nat128) (acc:elem) : elem =
   if len % 16 = 0 then acc else
@@ -117,7 +118,14 @@ val poly1305_hacl :
     poly1305 (KeyEquivalence.key_hacl_to_vale k)
       (MsgEquivalence.inp_hacl_to_vale msg))
 
-let poly1305_hacl len msg k = admit () // TODO: Prove
+let poly1305_hacl len msg k =
+  encode_r_hacl (slice k 0 16);
+  let x = if len%16 = 0 then 0 else 1 in
+  let r = HaclSpec.encode_r (slice k 0 16) in
+  let s = nat_from_bytes_le (slice k 16 32) in
+  let acc = HaclSpec.poly len msg r in
+  poly_hacl #x len msg r;
+  finish_hacl acc s
 
 val poly1305_vale :
   len:size_t ->
