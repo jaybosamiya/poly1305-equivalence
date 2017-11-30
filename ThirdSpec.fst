@@ -47,7 +47,7 @@ open Spec.Lib.IntTypes
 open Spec.Lib.IntSeq
 
      (* Need to increase limits to have the proofs go through *)
-     #set-options "--z3rlimit 5"
+     #set-options "--z3rlimit 50"
 
 (** Axiom: [nat_from_bytes_le] is same as [nat_from_intseq_le] *)
 val bytes_intseq_equiv :
@@ -84,15 +84,16 @@ let vale_last_block (len:nat) (inp:msg len) (r:nat128) (acc:elem) : elem =
     ((acc + padLast + ((inp k) % padLast)) * r) % prime
 
 val poly_vale :
+  #x:nat ->
   len:size_t ->
   r:nat128 ->
   inp:msg len ->
-  i:nat ->
-  Lemma (
-    vale_last_block len inp r
-      (ValeSpec.poly1305_hash_blocks 0 nat128_max r inp i) == poly #len r inp i)
+  Lemma (requires (len%16=0 ==> x=0) /\ (len%16<>0 ==> x=1))
+    (ensures
+       vale_last_block len inp r
+       (ValeSpec.poly1305_hash_blocks 0 nat128_max r inp (len/16)) == poly #len r inp (len/16+x))
 
-let poly_vale len r inp i = admit () // TODO: Prove
+let poly_vale #x len r inp = admit () // TODO: Prove
 
 (** Equivalence for [finish] *)
 
@@ -119,11 +120,13 @@ val poly1305_hacl :
 let poly1305_hacl len msg k = admit () // TODO: Prove
 
 val poly1305_vale :
-  len:nat ->
+  len:size_t ->
   r:nat128 ->
   s:nat128 ->
   inp:msg len ->
   Lemma (
     ValeSpec.poly1305_hash r s inp len == poly1305 (r, s) inp)
 
-let poly1305_vale len r s inp = admit () // TODO: Prove
+let poly1305_vale len key_r key_s inp =
+  let x = if len%16 = 0 then 0 else 1 in
+  poly_vale #x len (encode_r key_r) inp
