@@ -47,7 +47,7 @@ open Spec.Lib.IntTypes
 open Spec.Lib.IntSeq
 
      (* Need to increase limits to have the proofs go through *)
-     #set-options "--z3rlimit 50"
+     #set-options "--z3rlimit 80"
 
 (** Axiom: [nat_from_bytes_le] is same as [nat_from_intseq_le] *)
 val bytes_intseq_equiv :
@@ -75,6 +75,50 @@ val poly_hacl :
   Lemma (requires (len%16=0 ==> x=0) /\ (len%16<>0 ==> x=1))
     (ensures
        HaclSpec.poly len text r == poly #len r (MsgEquivalence.inp_hacl_to_vale text) (len/16+x))
+
+val lemma_hacl_update:
+  len:size_t{len <= 16} ->
+  b:lbytes len ->
+  r:nat128 ->
+  acc:elem ->
+  l:size_t ->
+  inp:msg l ->
+  kk:nat{kk <= l/16} ->
+  Lemma (requires
+           (poly #l r inp kk = acc) /\
+         (nat_from_intseq_le b = inp kk) /\
+         ((kk = l/16) <==> (len = l % 16 /\ len <> 0)) /\
+         ((kk < l/16) <==> (len = 16)))
+    (ensures
+       poly #l r inp (kk+1) = HaclSpec.update len b r acc)
+
+let lemma_hacl_update len b r acc l inp kk =
+  Math.Lemmas.pow2_le_compat 128 (8 * len);
+  let n = pow2 (8 * len) `HaclSpec.fadd` nat_from_bytes_le b in
+  let n2 = n `HaclSpec.fadd` acc in
+  let i = kk + 1 in
+  let pad = if i = (l/16) + 1 then pow2((l % 16) * 8) else nat128_max in
+  // assert (pad = pow2 (8 * len));
+  // assert (n = (pad + (inp kk)) % prime);
+  // assert (n2 = (n + acc) % prime);
+  Math.Lemmas.modulo_distributivity n n2 prime;
+  // assert (n2 = (pad + inp kk + acc) % prime);
+  let t' = n2 `HaclSpec.fmul` r in
+  // assert (t' = (n2 * r) % prime);
+  // assert (r % prime = r);
+  // assert (t' = ((pad + inp kk + acc) % prime * r) % prime);
+  Math.Lemmas.lemma_mod_mul_distr_l (pad + inp kk + acc) r prime;
+  // assert (t' = (((pad + inp kk + acc)) * r) % prime);
+  // assert (t' = HaclSpec.update len b r acc);
+  // assert (kk = i - 1);
+  let hh = poly r inp kk in
+  // assert (hh = acc);
+  let pad2 = if i = (l/16) + 1 then pow2((l % 16) * 8) else nat128_max in
+  // assert (pad = pad2);
+  let t2 = ((hh + pad2 + inp kk) * r) % prime in
+  // assert (t2 = poly #l r inp i);
+  // assert (t' = t2);
+  ()
 
 let poly_hacl #x len text r = admit () // TODO: Prove
 
