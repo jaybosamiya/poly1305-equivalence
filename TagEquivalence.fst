@@ -20,6 +20,7 @@ type hacl_tag = HaclSpec.tag
 
 open Spec.Lib.IntTypes
 open Spec.Lib.IntSeq
+open Axioms
 
 val tag_vale_to_hacl : vale_tag -> hacl_tag
 let tag_vale_to_hacl t = nat_to_bytes_le 16 t
@@ -27,16 +28,8 @@ let tag_vale_to_hacl t = nat_to_bytes_le 16 t
 val tag_hacl_to_vale : hacl_tag -> vale_tag
 let tag_hacl_to_vale t = nat_from_intseq_le t
 
-(** Axiom: Two sequences are same iff their LE representation is same *)
-val eq_nat_from_intseq:
-  #len:size_t ->
-  Lemma (forall (a:lbytes len) (b:lbytes len).
-                                 a == b <==> nat_from_intseq_le a == nat_from_intseq_le b)
-    [SMTPat (lbytes len)]
-let eq_nat_from_intseq #len = admit ()
-
 val tag_equivalence :
   t_h : hacl_tag ->
   t_v : vale_tag ->
   Lemma ((tag_vale_to_hacl t_v == t_h) <==> (tag_hacl_to_vale t_h == t_v))
-let tag_equivalence t_h t_v = ()
+let tag_equivalence t_h t_v = eq_nat_from_intseq (tag_vale_to_hacl t_v) t_h
