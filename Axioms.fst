@@ -47,3 +47,26 @@ val append: #len1:size_t -> #len2:size_t ->
   #len:size_t{len=len1+len2} -> s1:lbytes len1 -> s2:lbytes len2 ->
   s:lbytes len{(sub s 0 len1 == s1) /\
                (sub s len1 len2 == s2)}
+
+(** Axiom: [repeat_range] does what it says it does *)
+
+val repeat_range_semantics :
+  #a:Type{hasEq(a)} ->
+  min:size_t ->
+  max:size_t{min <= max} ->
+  f:(s:size_t{s >= min /\ s < max} -> a -> Tot a) ->
+  x:a ->
+  Lemma (
+    ((min = max) ==> repeat_range #a min max f x = x) /\
+    ((min < max) ==> repeat_range #a min max f x = repeat_range #a (min+1) max f (f min x)))
+    [SMTPat (repeat_range #a min max f x)]
+let repeat_range_semantics #a min max f x = admit ()
+
+(** Axiom: [repeati] does what it says it does *)
+val repeati_semantics :
+  #a:Type{hasEq(a)} ->
+  n:size_t ->
+  f:(i:size_t{i < n} -> a -> Tot a) ->
+  x:a ->
+  Lemma (repeati #a n f x = repeat_range #a 0 n f x)
+let repeati_semantics #a n f x = admit ()
