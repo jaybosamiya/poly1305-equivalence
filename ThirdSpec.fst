@@ -97,7 +97,20 @@ let lemma_hacl_update len b r acc l inp kk =
   let pad = pow2 (8 * len) in
   Math.Lemmas.lemma_mod_mul_distr_l (pad + inp kk + acc) r prime
 
-let poly_hacl #x len text r = admit () // TODO: Prove
+let poly_hacl #x len text r =
+  match x with
+  | 0 ->
+    let blocks = len / 16 in
+    let init  : elem = 0 in
+    let acc   : elem =
+      repeati blocks
+        (fun i acc  -> let b = slice text (16 * i) (16 * (i+1)) in
+	  HaclSpec.update 16 b r acc)
+        init in
+    let t_hacl = acc in
+    (* assert (t_hacl = HaclSpec.poly len text r); // this should go through but it doesn't *)
+    admit () // todo:prove
+  | _ -> admit () // todo: prove
 
 let vale_last_block (len:nat) (inp:msg len) (r:nat128) (acc:elem) : elem =
   if len % 16 = 0 then acc else
