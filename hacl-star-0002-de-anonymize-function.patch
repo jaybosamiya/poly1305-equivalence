@@ -1,0 +1,26 @@
+diff --git a/specs/Spec.Poly1305.fst b/specs/Spec.Poly1305.fst
+index 1b0a251f..cc34c1fc 100644
+--- a/specs/Spec.Poly1305.fst
++++ b/specs/Spec.Poly1305.fst
+@@ -30,15 +30,17 @@ let update (len:size_t{len <= blocksize}) (b:lbytes len)
+   let n = pow2 (8 * len) `fadd` nat_from_bytes_le b in
+   (n `fadd` acc) `fmul` r
+ 
++let update' (len:size_t) (text:lbytes len) (r:elem)
++  (i:nat{i<len/blocksize}) (acc:elem) : elem =
++  let b = slice text (blocksize * i) (blocksize * (i+1)) in
++  update 16 b r acc
++
+ let poly (len:size_t) (text:lbytes len) (r:elem) : elem =
+   let blocks = len / blocksize in
+   let rem = len % blocksize in
+   let init  : elem = 0 in
+   let acc   : elem = 
+-    repeati blocks
+-      (fun i acc  -> let b = slice text (blocksize * i) (blocksize * (i+1)) in
+-	          update 16 b r acc) 
+-      init in
++    repeati blocks (update' len text r) init in
+   if rem = 0 then
+      acc
+   else 

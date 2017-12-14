@@ -6,8 +6,11 @@ Steps to machine-check the proofs:
 git clone --recursive https://github.com/jaybosamiya/poly1305-equivalence
 cd poly1305-equivalence
 
-# Apply minor patches to squash some trivial warnings and errors
+# Apply minor patch to squash some trivial warnings and errors
 git apply --directory=hacl-star hacl-star-0001-Squash-some-errors-warnings.patch
+
+# Apply minor patch to de-anonymize a function, to make it possible to prove stuff
+git apply --directory=hacl-star hacl-star-0002-de-anonymize-function.patch
 
 # Run fstar on all fst files in current directory, using hints
 find -maxdepth 1 -type f -name '*.fst' -exec fstar --use_hints {} \;
