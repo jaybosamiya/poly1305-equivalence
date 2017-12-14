@@ -103,12 +103,9 @@ let poly_hacl #x len text r =
     let blocks = len / 16 in
     let init  : elem = 0 in
     let acc   : elem =
-      repeati blocks
-        (fun i acc  -> let b = slice text (16 * i) (16 * (i+1)) in
-	  HaclSpec.update 16 b r acc)
-        init in
+      repeati blocks (HaclSpec.update' len text r) init in
     let t_hacl = acc in
-    (* assert (t_hacl = HaclSpec.poly len text r); // this should go through but it doesn't *)
+    assert (t_hacl = HaclSpec.poly len text r);
     admit () // todo:prove
   | _ -> admit () // todo: prove
 
