@@ -113,6 +113,21 @@ let lemma_slice len inp i b =
   MsgEquivalence.inp_equivalence inp msg;
   Axioms.slice_semantics msg (16 * (i-1)) (16 * i)
 
+val lemma_slice' :
+  len:size_t{len%16 <> 0} ->
+  inp:msg len ->
+  b:lbytes (len%16) ->
+  Lemma
+    (requires
+       b == slice (MsgEquivalence.inp_vale_to_hacl inp) (16 * (len/16)) len)
+    (ensures
+       nat_from_intseq_le b = inp (len/16))
+
+let lemma_slice' len inp b =
+  let msg = MsgEquivalence.inp_vale_to_hacl inp in
+  MsgEquivalence.inp_equivalence inp msg;
+  Axioms.slice_semantics msg (16 * (len/16)) len
+
 val lemma_hacl_repeati:
   len:size_t ->
   text:lbytes len ->
@@ -138,6 +153,7 @@ let rec lemma_hacl_repeati len text r i =
 
 let rec poly_hacl #x len text r =
   let blocks = len / 16 in
+  let rem = len % 16 in
   let init  : elem = 0 in
   let acc   : elem =
     Axioms.repeati_semantics blocks (HaclSpec.update' len text r) init;
@@ -146,13 +162,15 @@ let rec poly_hacl #x len text r =
   match len with
   | 0 -> ()
   | _ ->
+    lemma_hacl_repeati len text r blocks;
     match x with
-    | 0 ->
-      let rem = 16 in
-      assert (len >= 16);
-      assert (acc = HaclSpec.poly len text r);
-      admit () // todo:prove
-    | _ -> admit () // todo: prove
+    | 0 -> ()
+    | 1 ->
+      let last = slice text (blocks * 16) len in
+      MsgEquivalence.inp_equivalence inp text;
+      lemma_slice' len inp last;
+      assume(poly #len r inp blocks = acc); // just need to prove this line
+    lemma_hacl_update rem last r acc len inp blocks
 
 let vale_last_block (len:nat) (inp:msg len) (r:nat128) (acc:elem) : elem =
   if len % 16 = 0 then acc else
