@@ -41,6 +41,13 @@ val eq_nat_from_intseq:
   Lemma (a == b <==> nat_from_intseq_le a == nat_from_intseq_le b)
 let eq_nat_from_intseq #t #len a b = admit ()
 
+(** Axiom: [nat_from_bytes_le] is same as [nat_from_intseq_le] *)
+val bytes_intseq_equiv :
+  #len:size_t -> b:lbytes len ->
+  Lemma (nat_from_bytes_le b = nat_from_intseq_le b)
+    [SMTPat (nat_from_bytes_le b)]
+let bytes_intseq_equiv #len b = admit ()
+
     assume
 (** Assumption: An [append] function is provided by the API *)
 val append: #len1:size_t -> #len2:size_t ->

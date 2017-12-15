@@ -49,13 +49,6 @@ open Spec.Lib.IntSeq
      (* Need to increase limits to have the proofs go through *)
      #set-options "--z3rlimit 100"
 
-(** Axiom: [nat_from_bytes_le] is same as [nat_from_intseq_le] *)
-val bytes_intseq_equiv :
-  #len:size_t -> b:lbytes len ->
-  Lemma (nat_from_bytes_le b = nat_from_intseq_le b)
-    [SMTPat (nat_from_bytes_le b)]
-let bytes_intseq_equiv #len b = admit ()
-
 (** Equivalence for [encode_r] *)
 
 val encode_r_hacl :
