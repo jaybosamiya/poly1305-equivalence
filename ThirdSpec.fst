@@ -7,7 +7,7 @@ open FStar.Mul
 open FStar.UInt
 
 let nat128_max = 0x100000000000000000000000000000000
-let _ = assert_norm (pow2 128 = nat128_max) 
+let _ = assert_norm (pow2 128 = nat128_max)
 type nat128 = x:int{0 <= x && x < nat128_max}
 
 type tag=TagEquivalence.vale_tag
