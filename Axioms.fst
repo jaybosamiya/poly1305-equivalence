@@ -57,8 +57,9 @@ val repeat_range_semantics :
   f:(s:size_t{s >= min /\ s < max} -> a -> Tot a) ->
   x:a ->
   Lemma (
-    ((min = max) ==> repeat_range #a min max f x = x) /\
-    ((min < max) ==> repeat_range #a min max f x = repeat_range #a (min+1) max f (f min x)))
+    repeat_range #a min max f x = (
+      if min = max then x
+      else repeat_range #a (min+1) max f (f min x)))
     [SMTPat (repeat_range #a min max f x)]
 let repeat_range_semantics #a min max f x = admit ()
 
