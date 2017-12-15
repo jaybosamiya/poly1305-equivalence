@@ -108,7 +108,10 @@ val lemma_slice :
           (ensures
              nat_from_intseq_le b = inp (i-1))
 
-let lemma_slice len inp i b = admit () // TODO: prove
+let lemma_slice len inp i b =
+  let msg = MsgEquivalence.inp_vale_to_hacl inp in
+  MsgEquivalence.inp_equivalence inp msg;
+  Axioms.slice_semantics msg (16 * (i-1)) (16 * i)
 
 val lemma_hacl_repeati:
   len:size_t ->
