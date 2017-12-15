@@ -97,17 +97,59 @@ let lemma_hacl_update len b r acc l inp kk =
   let pad = pow2 (8 * len) in
   Math.Lemmas.lemma_mod_mul_distr_l (pad + inp kk + acc) r prime
 
-let poly_hacl #x len text r =
-  match x with
-  | 0 ->
-    let blocks = len / 16 in
-    let init  : elem = 0 in
-    let acc   : elem =
-      repeati blocks (HaclSpec.update' len text r) init in
-    let t_hacl = acc in
-    assert (t_hacl = HaclSpec.poly len text r);
-    admit () // todo:prove
-  | _ -> admit () // todo: prove
+val lemma_slice :
+  len:size_t ->
+  inp:msg len ->
+  i:nat{0 < i /\ i <= len/16} ->
+        b:lbytes 16 ->
+        Lemma
+          (requires
+             b == slice (MsgEquivalence.inp_vale_to_hacl inp) (16 * (i-1)) (16 * i))
+          (ensures
+             nat_from_intseq_le b = inp (i-1))
+
+let lemma_slice len inp i b = admit () // TODO: prove
+
+val lemma_hacl_repeati:
+  len:size_t ->
+  text:lbytes len ->
+  r:nat128 ->
+  i:size_t{i <= len/16} ->
+  Lemma (repeati i (HaclSpec.update' len text r) 0 =
+         poly #len r (MsgEquivalence.inp_hacl_to_vale text) i)
+
+let rec lemma_hacl_repeati len text r i =
+  let up = HaclSpec.update' len text r in
+  Axioms.repeati_semantics i up 0;
+  match i with
+  | 0 -> ()
+  | _ ->
+    lemma_hacl_repeati len text r (i-1);
+    let b = slice text (16 * (i-1)) (16 * i) in
+    let inp = MsgEquivalence.inp_hacl_to_vale text in
+    MsgEquivalence.inp_equivalence inp text;
+    lemma_slice len inp i b;
+    let acc = repeati (i-1) up 0 in
+    lemma_hacl_update 16 b r acc len inp (i-1);
+    UsefulLemmas.repeati_reverse i up 0
+
+let rec poly_hacl #x len text r =
+  let blocks = len / 16 in
+  let init  : elem = 0 in
+  let acc   : elem =
+    Axioms.repeati_semantics blocks (HaclSpec.update' len text r) init;
+    repeati blocks (HaclSpec.update' len text r) init in
+  let inp = MsgEquivalence.inp_hacl_to_vale text in
+  match len with
+  | 0 -> ()
+  | _ ->
+    match x with
+    | 0 ->
+      let rem = 16 in
+      assert (len >= 16);
+      assert (acc = HaclSpec.poly len text r);
+      admit () // todo:prove
+    | _ -> admit () // todo: prove
 
 let vale_last_block (len:nat) (inp:msg len) (r:nat128) (acc:elem) : elem =
   if len % 16 = 0 then acc else
