@@ -44,3 +44,34 @@ let subs_eq #l #a #b x y =
   sub_semantics y a b;
   assert (forall (i:size_t{i<b}). x.[i+a] == y.[i+a]);
   assert (forall (j:size_t{a <= j /\ j < l}). x.[(j-a)+a] == y.[j]) // the [(j-a)+a] is required to push the proof through
+
+(** Reverse direction of repeati *)
+val repeati_reverse :
+  #a:Type{hasEq(a)} ->
+  cur:size_t{(0 < cur)} ->
+  up:(j:nat{j<cur}->a->a) ->
+  x:a ->
+  Lemma
+    (ensures
+       forall (i:size_t{(0<i) /\ (i<=cur)}).
+                repeati i up x = up (i-1) (repeati (i-1) up x))
+
+let rec repeati_reverse #a cur up x =
+  Axioms.repeati_semantics cur up x;
+  Axioms.repeati_semantics (cur-1) up x;
+  match cur with
+  | 1 -> ()
+  | _ ->
+    repeati_reverse #a (cur-1) up x;
+    match cur with
+    | 2 -> ()
+    | _ ->
+      repeati_reverse #a (cur-2) up x;
+      match cur with
+      | 3 -> ()
+      | _ ->
+        repeati_reverse #a (cur-3) up x;
+        match cur with
+        | 4 -> ()
+        | _ -> admit () (* TODO: Prove. I have rolled this out a bit to
+                           show a possible direction to go in *)
