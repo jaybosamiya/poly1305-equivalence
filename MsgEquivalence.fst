@@ -20,23 +20,18 @@ open Spec.Lib.IntSeq
 open Axioms
 open UsefulLemmas
 
-type vale_msg (l:nat) = a:(int->nat128){l % 16 <> 0 ==> a (l / 16) < pow2 (8 `op_Multiply` (l % 16))}
+type vale_idx (l:nat) = a:nat{a <= l/16 /\ (l%16 = 0 ==> a < l/16)}
+type vale_msg (l:nat) = a:(vale_idx l->nat128){l % 16 <> 0 ==> a (l/16) < pow2 (8 `op_Multiply` (l % 16))}
 type hacl_msg (l:size_t) = lbytes l
 
-(** Definitionally: Two [vale_msg]s are equal iff all their values are equal
-    (in the ranges that matter) *)
-val vale_msg_eq:
-  #l:nat ->
-  Lemma (
-    forall (a:vale_msg l)
-      (b:vale_msg l).
-        a == b <==>
-    ((forall (x:int{x >= 0 /\ x < (l/16)}). a x = b x) /\
-     (l % 16 <> 0 ==> a (l/16) = b (l/16))))
-    [SMTPat (vale_msg l)]
-let vale_msg_eq #l = admit ()
-
 (* Now we actually write down the conversions *)
+
+val vale_idx_cast :
+  #l1:nat ->
+  #l2:nat ->
+  a:vale_idx l1{a <= l2 / 16 /\ (l2 % 16 = 0 ==> a < l2 / 16)} ->
+  b:vale_idx l2
+let vale_idx_cast #l1 #l2 a = let b : nat = a in b
 
 val remove_last_block :
   #l:size_t{l > 0} ->
@@ -46,7 +41,7 @@ v:vale_msg l ->
 v':vale_msg rem{forall (x:size_t{x >= 0 /\ x < rem/16}). v x = v' x}
 let remove_last_block #l #lst #rem v =
   let v' : vale_msg rem =
-    fun i -> if i < rem/16 then v i else 0 in
+    fun i -> if i < rem/16 then v (vale_idx_cast i) else 0 in
   v'
 
 val inp_vale_to_hacl : #l:size_t -> inp:vale_msg l -> Tot (msg:lbytes l)
@@ -83,6 +78,9 @@ val rem_prop :
 i:hacl_msg l ->
 Lemma (inp_hacl_to_vale (sub i 0 rem) == remove_last_block #l #lst #rem (inp_hacl_to_vale i))
 let rem_prop #l #lst #rem i =
+  let a = inp_hacl_to_vale (sub i 0 rem) in
+  let b = remove_last_block #l #lst #rem (inp_hacl_to_vale i) in
+  assert (FStar.FunctionalExtensionality.feq a b);
   // assert (rem % 16 = 0); // (sometimes) required for the prover to realize this
         ()
 
@@ -92,14 +90,20 @@ val part_inv_vale :
   Lemma (inp_hacl_to_vale (inp_vale_to_hacl inp) == inp)
 let rec part_inv_vale #l inp =
   match l with
-  | 0 -> ()
+  | 0 ->
+    assert (FStar.FunctionalExtensionality.feq (inp_hacl_to_vale (inp_vale_to_hacl inp)) inp)
   | _ ->
     let msg = inp_vale_to_hacl inp in
     let (lst:size_t{lst <= 16 /\ lst <= l}) = if l % 16 = 0 then 16 else l % 16 in
-    let rem = l - lst in
+    let rem : size_t = l - lst in
     rem_prop #l #lst #rem msg;
     let prev_inp = remove_last_block #l #lst #rem inp in
-    part_inv_vale #rem prev_inp
+    part_inv_vale #rem prev_inp;
+    let prev_inp' = inp_hacl_to_vale (inp_vale_to_hacl prev_inp) in
+    assert (FStar.FunctionalExtensionality.feq  prev_inp prev_inp');
+    let inp' = inp_hacl_to_vale (inp_vale_to_hacl inp) in
+    assert (forall (x:vale_idx rem). inp (vale_idx_cast x) == inp' (vale_idx_cast x));
+    assert (FStar.FunctionalExtensionality.feq inp inp')
 
 val lemma_inp_hacl_to_vale_last_block :
   #l:size_t{l>0} ->
