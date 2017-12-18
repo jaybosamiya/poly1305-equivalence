@@ -28,15 +28,17 @@ let sub_of_sub #t #len s start n =
 (** If both parts of 2 sequences are equal, then the sequences themselves are equal *)
 val subs_eq :
   #l:size_t ->
-  #a:size_t ->
-  #b:size_t{a + b = l} ->
+  a:size_t{a <= l} ->
   x:lbytes l ->
   y:lbytes l ->
   Lemma (requires
            ((sub x 0 a == sub y 0 a) /\
-            (sub x a b == sub y a b)))
+            (sub x a (l-a) == sub y a (l-a))))
     (ensures x == y)
-let subs_eq #l #a #b x y =
+let subs_eq #l a x y =
+  let (b : size_t{b <= l}) =
+    // for some reason, it refuses to infer [b <= l] on its own
+          l - a in
   sub_semantics x 0 a;
   sub_semantics y 0 a;
   assert (forall (i:size_t{i<a}). x.[i] == y.[i]);

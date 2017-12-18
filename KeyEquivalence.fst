@@ -43,7 +43,7 @@ let part_inv_hacl k =
   let r0, s0 = sub k' 0 16, sub k' 16 16 in
   eq_nat_from_intseq r r0;
   eq_nat_from_intseq s s0;
-  UsefulLemmas.subs_eq #32 #16 #16 k k'
+  UsefulLemmas.subs_eq 16 k k'
 
 val part_inv_vale :
   r:nat128 ->

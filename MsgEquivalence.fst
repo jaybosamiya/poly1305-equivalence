@@ -128,7 +128,7 @@ let rec part_inv_hacl #l msg =
     part_inv_hacl #rem prev_msg;
     let msg' = inp_vale_to_hacl inp in
     lemma_inp_hacl_to_vale_last_block #l #lst #rem msg inp;
-    subs_eq #l #rem #lst msg msg'
+    subs_eq rem msg msg'
 
 val inp_equivalence :
   #l:size_t ->
