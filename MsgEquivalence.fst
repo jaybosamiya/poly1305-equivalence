@@ -20,8 +20,6 @@ open Spec.Lib.IntSeq
 open Axioms
 open UsefulLemmas
 
-(* First, a bunch of axioms and properties that we will use *)
-
 type vale_msg (l:nat) = a:(int->nat128){l % 16 <> 0 ==> a (l / 16) < pow2 (8 `op_Multiply` (l % 16))}
 type hacl_msg (l:size_t) = lbytes l
 
