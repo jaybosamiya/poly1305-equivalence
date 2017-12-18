@@ -1,5 +1,5 @@
 [
-  "…\u0003Ô 1øúåÏ÷ãÃ4N\u0016f",
+  "\u001d+\r‘œIýŽëpð9éo\u001a³",
   [
     [
       "UsefulLemmas.sub_of_sub",
@@ -70,7 +70,17 @@
       1,
       2,
       1,
-      [ "@query", "assumption_Prims.HasEq_int" ],
+      [
+        "@MaxIFuel_assumption", "@query",
+        "Prims_pretyping_ae567c2fb75be05905677af440075565",
+        "equation_Prims.nat", "equation_Spec.Lib.IntTypes.max_size_t",
+        "equation_Spec.Lib.IntTypes.size_t",
+        "function_token_typing_Spec.Lib.IntTypes.max_size_t",
+        "int_inversion", "primitive_Prims.op_Subtraction",
+        "projection_inverse_BoxInt_proj_0",
+        "refinement_interpretation_Prims_Tm_refine_ba523126f67e00e7cd55f0b92f16681d",
+        "refinement_interpretation_Spec.Lib.IntTypes_Tm_refine_8ae4abcfc6bc8d4903b7e1f40e070ec2"
+      ],
       0
     ],
     [
@@ -85,11 +95,12 @@
         "equation_Spec.Lib.IntTypes.size_t",
         "function_token_typing_Spec.Lib.IntTypes.max_size_t",
         "int_inversion", "primitive_Prims.op_Addition",
+        "primitive_Prims.op_Subtraction",
         "projection_inverse_BoxBool_proj_0",
         "projection_inverse_BoxInt_proj_0",
         "refinement_interpretation_Prims_Tm_refine_ba523126f67e00e7cd55f0b92f16681d",
-        "refinement_interpretation_Spec.Lib.IntTypes_Tm_refine_8ae4abcfc6bc8d4903b7e1f40e070ec2",
-        "refinement_interpretation_UsefulLemmas_Tm_refine_dfbcca3b8e5a922b6ed6e3dc3a019732"
+        "refinement_interpretation_Spec.Lib.IntSeq_Tm_refine_e9c270e74b09a745564fcd74dbca4997",
+        "refinement_interpretation_Spec.Lib.IntTypes_Tm_refine_8ae4abcfc6bc8d4903b7e1f40e070ec2"
       ],
       0
     ],
@@ -226,6 +237,67 @@
         "refinement_interpretation_Prims_Tm_refine_ba523126f67e00e7cd55f0b92f16681d",
         "refinement_interpretation_Spec.Lib.IntTypes_Tm_refine_8ae4abcfc6bc8d4903b7e1f40e070ec2",
         "refinement_interpretation_UsefulLemmas_Tm_refine_bfd27ef7426b2a0c6302bf816720e659"
+      ],
+      0
+    ],
+    [
+      "UsefulLemmas.repeati_reverse",
+      1,
+      2,
+      1,
+      [
+        "@MaxIFuel_assumption", "@query",
+        "Prims_pretyping_ae567c2fb75be05905677af440075565",
+        "equation_Prims.nat", "equation_Spec.Lib.IntTypes.max_size_t",
+        "equation_Spec.Lib.IntTypes.size_t",
+        "function_token_typing_Spec.Lib.IntTypes.max_size_t",
+        "int_inversion", "primitive_Prims.op_Subtraction",
+        "projection_inverse_BoxInt_proj_0",
+        "refinement_interpretation_Prims_Tm_refine_ba523126f67e00e7cd55f0b92f16681d",
+        "refinement_interpretation_Spec.Lib.IntSeq_Tm_refine_5514fbe9e08dfda40f950a7b9f1b2b98",
+        "refinement_interpretation_Spec.Lib.IntTypes_Tm_refine_8ae4abcfc6bc8d4903b7e1f40e070ec2",
+        "refinement_interpretation_UsefulLemmas_Tm_refine_38bbac18a2afbec9772df87117047423",
+        "refinement_interpretation_UsefulLemmas_Tm_refine_bca617b1b2ea961e009f31145da5d056"
+      ],
+      0
+    ],
+    [
+      "UsefulLemmas.repeati_reverse",
+      2,
+      2,
+      1,
+      [
+        "@MaxFuel_assumption", "@MaxIFuel_assumption",
+        "@fuel_correspondence_Prims.pow2.fuel_instrumented",
+        "@fuel_irrelevance_Prims.pow2.fuel_instrumented", "@query",
+        "Prims_pretyping_ae567c2fb75be05905677af440075565",
+        "Spec.Lib.IntSeq_interpretation_Tm_arrow_43f2c982646599b615a9493de6e6b351",
+        "Spec.Lib.IntSeq_interpretation_Tm_arrow_651a0edaae1461aa3123d3f799d1d577",
+        "UsefulLemmas_interpretation_Tm_arrow_e45a445e768be53a62e5e5bcc52684a0",
+        "binder_x_40990cdd98576dfcd47623c75db4224a_3",
+        "binder_x_5bcdf1fad0707fe3a20909491b11ffd8_2",
+        "binder_x_96a16879717caec4766b0e0ece586d5a_1",
+        "binder_x_f2ec2b2da596f570af1ec522678300cd_4", "equation_Prims.nat",
+        "equation_Spec.Lib.IntTypes.max_size_t",
+        "equation_Spec.Lib.IntTypes.size_t",
+        "function_token_typing_Spec.Lib.IntTypes.max_size_t",
+        "int_inversion", "int_typing", "lemma_Axioms.repeat_range_semantics",
+        "lemma_Spec.Lib.IntTypes.pow2_values", "primitive_Prims.op_Addition",
+        "primitive_Prims.op_Equality", "primitive_Prims.op_Subtraction",
+        "projection_inverse_BoxBool_proj_0",
+        "projection_inverse_BoxInt_proj_0",
+        "refinement_interpretation_Prims_Tm_refine_414d0a9f578ab0048252f8c8f552b99f",
+        "refinement_interpretation_Prims_Tm_refine_ba523126f67e00e7cd55f0b92f16681d",
+        "refinement_interpretation_Spec.Lib.IntSeq_Tm_refine_414dbeb3d8d24161127c0d61de138914",
+        "refinement_interpretation_Spec.Lib.IntSeq_Tm_refine_5514fbe9e08dfda40f950a7b9f1b2b98",
+        "refinement_interpretation_Spec.Lib.IntSeq_Tm_refine_5d68b4aedab07e9543c96792e76744c9",
+        "refinement_interpretation_Spec.Lib.IntTypes_Tm_refine_8ae4abcfc6bc8d4903b7e1f40e070ec2",
+        "refinement_interpretation_UsefulLemmas_Tm_refine_893c3922c906d181d9e9899e01fb7b26",
+        "refinement_interpretation_UsefulLemmas_Tm_refine_bb657f9c9f7b9564052f43c53a196303",
+        "refinement_interpretation_UsefulLemmas_Tm_refine_bca617b1b2ea961e009f31145da5d056",
+        "refinement_interpretation_UsefulLemmas_Tm_refine_d59427343ead66e32c351780af7c555d",
+        "typing_Spec.Lib.IntSeq.repeat_range", "unit_inversion",
+        "well-founded-ordering-on-nat"
       ],
       0
     ]
