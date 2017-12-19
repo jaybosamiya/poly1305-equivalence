@@ -20,7 +20,10 @@ open Spec.Lib.IntSeq
 open Axioms
 open UsefulLemmas
 
-type vale_idx (l:nat) = a:nat{a <= l/16 /\ (l%16 = 0 ==> a < l/16)}
+let sat_idx (l:nat) a =
+  if l % 16 = 0 then a < l/16 else a <= l/16
+
+type vale_idx (l:nat) = a:nat{sat_idx l a}
 type vale_msg (l:nat) = a:(vale_idx l->nat128){l % 16 <> 0 ==> a (l/16) < pow2 (8 `op_Multiply` (l % 16))}
 type hacl_msg (l:size_t) = lbytes l
 
