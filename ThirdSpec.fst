@@ -173,16 +173,6 @@ let vale_last_block (len:nat) (inp:msg len) (r:nat128) (acc:elem) : elem =
     let padLast = pow2((len % 16) * 8) in
     ((acc + padLast + ((inp k) % padLast)) * r) % prime
 
-let restrict_vale (#l:size_t) (inp:int->nat128) : msg l =
-  match l % 16 with
-  | 0 ->
-    fun i -> inp i
-  | _ ->
-    fun i ->
-      if i = l/16
-      then (inp i) % pow2 (8 * (l%16))
-      else inp i
-
 let msg_to_vale (#l:size_t) (inp:msg l) : (int->nat128) =
   fun i ->
     if sat_idx l i && i >= 0
@@ -257,5 +247,4 @@ val poly1305_vale :
     ValeSpec.poly1305_hash r s (msg_to_vale inp) len == poly1305 (r, s) inp)
 
 let poly1305_vale len key_r key_s inp =
-  let x = if len%16 = 0 then 0 else 1 in
   poly_vale len inp (encode_r key_r)
