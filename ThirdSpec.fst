@@ -13,6 +13,9 @@ type nat128 = x:int{0 <= x && x < nat128_max}
 type tag=TagEquivalence.vale_tag
 type key=tuple2 nat128 nat128
 type msg l=MsgEquivalence.vale_msg l
+type idx l=MsgEquivalence.vale_idx l
+let sat_idx = MsgEquivalence.sat_idx
+type idx' l=(x:nat{x > 0 ==> sat_idx l (x-1)})
 
 let prime = (nat128_max * 4 - 5)
 type elem = e:nat{e < prime}
@@ -20,7 +23,7 @@ type elem = e:nat{e < prime}
 let encode_r (r:nat128) : nat128 =
   logand #128 r 0x0ffffffc0ffffffc0ffffffc0fffffff
 
-let rec poly #l (r:nat128) (inp:msg l) (i:nat) : elem =
+let rec poly #l (r:nat128) (inp:msg l) (i:idx' l) : elem =
   match i with
   | 0 -> 0
   | _ ->
@@ -61,13 +64,12 @@ let encode_r_hacl r = admit () // we will just assume this for now
 (** Equivalence for [poly] *)
 
 val poly_hacl :
-  #x:nat ->
   len:size_t ->
   text:lbytes len ->
   r:nat128 ->
-  Lemma (requires (len%16=0 ==> x=0) /\ (len%16<>0 ==> x=1))
-    (ensures
-       HaclSpec.poly len text r == poly #len r (MsgEquivalence.inp_hacl_to_vale text) (len/16+x))
+  Lemma
+    (let k : idx' len = if len%16 = 0 then len/16 else len/16+1 in
+     HaclSpec.poly len text r == poly #len r (MsgEquivalence.inp_hacl_to_vale text) k)
 
 val lemma_hacl_update:
   len:size_t{len <= 16} ->
@@ -76,7 +78,7 @@ val lemma_hacl_update:
   acc:elem ->
   l:size_t ->
   inp:msg l ->
-  kk:nat{kk <= l/16} ->
+  kk:nat{sat_idx l kk} ->
   Lemma (requires
            (poly #l r inp kk = acc) /\
          (nat_from_intseq_le b = inp kk) /\
@@ -144,7 +146,7 @@ let rec lemma_hacl_repeati len text r i =
     lemma_hacl_update 16 b r acc len inp (i-1);
     UsefulLemmas.repeati_reverse i up 0
 
-let rec poly_hacl #x len text r =
+let rec poly_hacl len text r =
   let blocks = len / 16 in
   let rem = len % 16 in
   let init  : elem = 0 in
@@ -157,9 +159,9 @@ let rec poly_hacl #x len text r =
   match len with
   | 0 -> ()
   | _ ->
-    match x with
+    match len%16 with
     | 0 -> ()
-    | 1 ->
+    | _ ->
       let last = slice text (blocks * 16) len in
       MsgEquivalence.inp_equivalence inp text;
       lemma_slice' len inp last;
@@ -171,13 +173,28 @@ let vale_last_block (len:nat) (inp:msg len) (r:nat128) (acc:elem) : elem =
     let padLast = pow2((len % 16) * 8) in
     ((acc + padLast + ((inp k) % padLast)) * r) % prime
 
+let restrict_vale (#l:size_t) (inp:int->nat128) : msg l =
+  match l % 16 with
+  | 0 ->
+    fun i -> inp i
+  | _ ->
+    fun i ->
+      if i = l/16
+      then (inp i) % pow2 (8 * (l%16))
+      else inp i
+
+let msg_to_vale (#l:size_t) (inp:msg l) : (int->nat128) =
+  fun i ->
+    if sat_idx l i && i >= 0
+    then inp i
+    else 0
 
 val poly_vale' :
   #l:size_t ->
   len:size_t{len%16=0 /\ len <= l} ->
   r:nat128 ->
   inp:msg l ->
-  Lemma ((ValeSpec.poly1305_hash_blocks 0 nat128_max r inp (len/16)) == poly #l r inp (len/16))
+  Lemma ((ValeSpec.poly1305_hash_blocks 0 nat128_max r (msg_to_vale inp) (len/16)) == poly #l r inp (len/16))
 
 let rec poly_vale' #l len r inp =
   match len with
@@ -185,21 +202,20 @@ let rec poly_vale' #l len r inp =
   | _ -> poly_vale' #l (len-16) r inp
 
 val poly_vale :
-  #x:nat ->
   len:size_t ->
-  r:nat128 ->
   inp:msg len ->
-  Lemma (requires (len%16=0 ==> x=0) /\ (len%16<>0 ==> x=1))
-    (ensures
-       vale_last_block len inp r
-       (ValeSpec.poly1305_hash_blocks 0 nat128_max r inp (len/16)) == poly #len r inp (len/16+x))
+  r:nat128 ->
+  Lemma
+    (let k : idx' len = if len%16 = 0 then len/16 else len/16+1 in
+     vale_last_block len inp r
+       (ValeSpec.poly1305_hash_blocks 0 nat128_max r (msg_to_vale inp) (len/16)) == poly #len r inp k)
 
-let rec poly_vale #x len r inp =
-  match x with
-  | 0 -> poly_vale' #len len r inp
-  | 1 -> let b = len%16 in
-    poly_vale' #len (len-b) r inp;
-    FStar.Math.Lemmas.modulo_lemma (inp (len/16)) (pow2 (b*8))
+let rec poly_vale len inp r =
+  let b = len%16 in
+  poly_vale' (len-b) r inp;
+  match b with
+  | 0 -> ()
+  | _ -> FStar.Math.Lemmas.modulo_lemma (inp (len/16)) (pow2 (b*8))
 
 (** Equivalence for [finish] *)
 
@@ -229,7 +245,7 @@ let poly1305_hacl len msg k =
   let r = HaclSpec.encode_r (slice k 0 16) in
   let s = nat_from_bytes_le (slice k 16 32) in
   let acc = HaclSpec.poly len msg r in
-  poly_hacl #x len msg r;
+  poly_hacl len msg r;
   finish_hacl acc s
 
 val poly1305_vale :
@@ -238,8 +254,8 @@ val poly1305_vale :
   s:nat128 ->
   inp:msg len ->
   Lemma (
-    ValeSpec.poly1305_hash r s inp len == poly1305 (r, s) inp)
+    ValeSpec.poly1305_hash r s (msg_to_vale inp) len == poly1305 (r, s) inp)
 
 let poly1305_vale len key_r key_s inp =
   let x = if len%16 = 0 then 0 else 1 in
-  poly_vale #x len (encode_r key_r) inp
+  poly_vale len inp (encode_r key_r)
