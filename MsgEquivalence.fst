@@ -105,7 +105,7 @@ let rec part_inv_vale #l inp =
     let prev_inp' = inp_hacl_to_vale (inp_vale_to_hacl prev_inp) in
     assert (FStar.FunctionalExtensionality.feq  prev_inp prev_inp');
     let inp' = inp_hacl_to_vale (inp_vale_to_hacl inp) in
-    assert (forall (x:vale_idx rem). inp (vale_idx_cast x) == inp' (vale_idx_cast x));
+    assert (forall (x:vale_idx rem). {:pattern (inp x) \/ (inp' x)} inp (vale_idx_cast x) == inp' (vale_idx_cast x));
     assert (FStar.FunctionalExtensionality.feq inp inp')
 
 val lemma_inp_hacl_to_vale_last_block :
