@@ -1,7 +1,7 @@
 module Poly1305.Equivalence
 
        (* Need to increase limits to have the proofs go through *)
-       #set-options "--z3rlimit 100"
+       #set-options "--z3rlimit 20"
 
 module ValeSpec = Poly1305.Spec_s
 module HaclSpec = Spec.Poly1305
@@ -13,29 +13,28 @@ type key = HaclSpec.key
 type tag = HaclSpec.tag
 
 val spec_equal :
+  len:size_t ->
   key_r:nat128 ->
   key_s:nat128 ->
-  inp:(int->nat128) ->
-  len:nat ->
-  t:int{t==ValeSpec.poly1305_hash key_r key_s inp len} ->
-  len1:size_t ->
-  msg:lbytes len1 ->
-  k:key ->
-  t1:tag{t1==HaclSpec.poly1305 len1 msg k} ->
+  msg:lbytes len ->
   Lemma
-    (requires (
-        (len = len1) /\
-        (k == KeyEquivalence.key_vale_to_hacl key_r key_s) /\
-        (inp == MsgEquivalence.inp_hacl_to_vale #len1 msg)))
-    (ensures (
-        (t == TagEquivalence.tag_hacl_to_vale t1) /\
-        (t1 == TagEquivalence.tag_vale_to_hacl t)))
+    (let k = KeyEquivalence.key_vale_to_hacl key_r key_s in
+     let (inp : int->nat128) = MsgEquivalence.inp_hacl_to_vale #len msg in
+     let t1 = ValeSpec.poly1305_hash key_r key_s inp len in
+     let t2 = HaclSpec.poly1305 len msg k in
+     (t1 == TagEquivalence.tag_hacl_to_vale t2) /\
+     (t2 == TagEquivalence.tag_vale_to_hacl t1))
 
-let spec_equal
-    key_r key_s inp len t
-    len1 msg k t1 =
+let spec_equal len key_r key_s msg =
+  let k = KeyEquivalence.key_vale_to_hacl key_r key_s in
+  let inp = MsgEquivalence.inp_hacl_to_vale #len msg in
+  let t1 = ValeSpec.poly1305_hash key_r key_s inp len in
+  let t2 = HaclSpec.poly1305 len msg k in
   KeyEquivalence.key_equivalence key_r key_s k;
   MsgEquivalence.inp_equivalence inp msg;
-  ThirdSpec.poly1305_hacl len1 msg k;
+  ThirdSpec.poly1305_hacl len msg k;
   ThirdSpec.poly1305_vale len key_r key_s inp;
-  TagEquivalence.tag_equivalence t1 t
+  TagEquivalence.tag_equivalence t2 t1;
+  // assert (t1 == TagEquivalence.tag_hacl_to_vale t2);
+  admit ();
+  ()

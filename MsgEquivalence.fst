@@ -137,9 +137,29 @@ let rec part_inv_hacl #l msg =
     lemma_inp_hacl_to_vale_last_block #l #lst #rem msg inp;
     subs_eq rem msg msg'
 
+let vale_msg_to_map (#l:size_t) (inp:vale_msg l) : (int->nat128) =
+  fun i ->
+    if sat_idx l i && i >= 0
+    then inp i
+    else 0
+
+let vale_map_to_msg (#l:size_t) (inp:int->nat128) : (vale_msg l) =
+  if l % 16 = 0
+  then inp
+  else
+    fun i ->
+      let mod = pow2 (8 `op_Multiply` (l%16)) in
+      if i = l/16 then (inp i) % mod else inp i
+
+val vale_map_inv :
+  l:size_t ->
+  inp:(int->nat128) ->
+  Lemma (eq_vale_msg l inp
+           (vale_msg_to_map (vale_map_to_msg #l inp)))
+
 val inp_equivalence :
   #l:size_t ->
-  inp:vale_msg l ->
+  inp:(int->nat128) ->
   msg:hacl_msg l ->
   Lemma ((inp_hacl_to_vale #l msg) == inp <==>
          (inp_vale_to_hacl #l inp) == msg)
