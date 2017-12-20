@@ -87,6 +87,8 @@ let rem_prop #l #lst #rem i =
   // assert (rem % 16 = 0); // (sometimes) required for the prover to realize this
         ()
 
+        #reset-options "--using_facts_from '* -Axioms.eq_vale_map'"
+
 val part_inv_vale :
   #l:size_t ->
   inp:vale_msg l ->

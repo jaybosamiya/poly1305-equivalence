@@ -78,3 +78,9 @@ val repeati_semantics :
   x:a ->
   Lemma (repeati #a n f x = repeat_range #a 0 n f x)
 let repeati_semantics #a n f x = admit ()
+
+
+type eq_vale_map (l:nat) (m1:int->Poly1305.Spec_s.nat128) (m2:int->Poly1305.Spec_s.nat128) = (
+  let mod = pow2 (8 `op_Multiply` (l%16)) in
+  (forall (x:nat{x < l/16}). m1 x = m2 x) /\
+  (l%16 <> 0 ==> (m1 (l/16)) % mod = (m2 (l/16)) % mod))
