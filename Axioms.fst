@@ -78,3 +78,11 @@ val repeati_semantics :
   x:a ->
   Lemma (repeati #a n f x = repeat_range #a 0 n f x)
 let repeati_semantics #a n f x = admit ()
+
+
+(** Proposition for equivalent vale messages *)
+type vale_map = int->Poly1305.Spec_s.nat128
+type vale_map_eq (l:nat) (m1:vale_map) (m2:vale_map) =
+  (let trunc a = a % pow2 (8 `op_Multiply` (l%16)) in
+   ((forall (x:nat{x < l/16}). m1 x = m2 x) /\
+    (l%16 <> 0 ==> trunc (m1 l/16) = trunc (m2 l/16))))
