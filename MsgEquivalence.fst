@@ -11,7 +11,7 @@ module ValeSpec = Poly1305.Spec_s
 module HaclSpec = Spec.Poly1305
 
                   (* Need to increase limits to have the proofs go through *)
-                  #set-options "--z3rlimit 300"
+                  #set-options "--z3rlimit 1000"
 
 type nat128 = ValeSpec.nat128
 
@@ -87,11 +87,11 @@ let rem_prop #l #lst #rem i =
   // assert (rem % 16 = 0); // (sometimes) required for the prover to realize this
         ()
 
-val part_inv_vale :
+val part_inv_vale' :
   #l:size_t ->
   inp:vale_msg l ->
   Lemma (inp_hacl_to_vale (inp_vale_to_hacl inp) == inp)
-let rec part_inv_vale #l inp =
+let rec part_inv_vale' #l inp =
   match l with
   | 0 ->
     assert (FStar.FunctionalExtensionality.feq (inp_hacl_to_vale (inp_vale_to_hacl inp)) inp)
@@ -101,11 +101,12 @@ let rec part_inv_vale #l inp =
     let rem : size_t = l - lst in
     rem_prop #l #lst #rem msg;
     let prev_inp = remove_last_block #l #lst #rem inp in
-    part_inv_vale #rem prev_inp;
+    part_inv_vale' #rem prev_inp;
     let prev_inp' = inp_hacl_to_vale (inp_vale_to_hacl prev_inp) in
     assert (FStar.FunctionalExtensionality.feq  prev_inp prev_inp');
     let inp' = inp_hacl_to_vale (inp_vale_to_hacl inp) in
-    assert (forall (x:vale_idx rem). inp (vale_idx_cast x) == inp' (vale_idx_cast x));
+    assert (forall (x:vale_idx rem).
+                     {:pattern (inp x) \/ (inp' x)} inp (vale_idx_cast x) == inp' (vale_idx_cast x));
     assert (FStar.FunctionalExtensionality.feq inp inp')
 
 val lemma_inp_hacl_to_vale_last_block :
@@ -118,12 +119,12 @@ Lemma (sub msg rem lst == nat_to_bytes_le lst (inp (rem/16)))
 let lemma_inp_hacl_to_vale_last_block #l #lst #rem msg inp =
   eq_nat_from_intseq (nat_to_bytes_le lst (inp (rem/16))) (sub msg rem lst)
 
-val part_inv_hacl :
+val part_inv_hacl' :
   #l:size_t ->
   msg:hacl_msg l ->
   Lemma (inp_vale_to_hacl (inp_hacl_to_vale msg) == msg)
 
-let rec part_inv_hacl #l msg =
+let rec part_inv_hacl' #l msg =
   match l with
   | 0 -> ()
   | _ ->
@@ -132,18 +133,164 @@ let rec part_inv_hacl #l msg =
     let rem:size_t = l - lst in
     rem_prop #l #lst #rem msg;
     let prev_msg = sub msg 0 rem in
-    part_inv_hacl #rem prev_msg;
+    part_inv_hacl' #rem prev_msg;
     let msg' = inp_vale_to_hacl inp in
     lemma_inp_hacl_to_vale_last_block #l #lst #rem msg inp;
     subs_eq rem msg msg'
 
-val inp_equivalence :
+val inp_equivalence' :
   #l:size_t ->
   inp:vale_msg l ->
   msg:hacl_msg l ->
-  Lemma ((inp_hacl_to_vale #l msg) == inp <==>
+  Lemma (inp_hacl_to_vale #l msg == inp <==>
          (inp_vale_to_hacl #l inp) == msg)
 
+let rec inp_equivalence' #l inp msg =
+  part_inv_vale' #l inp;
+  part_inv_hacl' msg
+
+(*  ////////////////////////////////////////////////////////////////////////////// *)
+
+let vale_msg_to_map (#l:size_t) (inp:vale_msg l) : (int->nat128) =
+  fun i ->
+    if sat_idx l i && i >= 0
+    then inp i
+    else 0
+
+let vale_map_to_msg (#l:size_t) (inp:int->nat128) : (vale_msg l) =
+  if l % 16 = 0
+  then
+    fun i -> inp i
+  else
+    fun i ->
+      let mod = pow2 (8 `op_Multiply` (l%16)) in
+      Math.Lemmas.pow2_le_compat 128 (8 `op_Multiply` (l%16));
+      if i = l/16 then (inp i) % mod else inp i
+
+val vale_map_to_msg_for_eq :
+  l:size_t ->
+  inp1:(int->nat128) ->
+  inp2:(int->nat128) ->
+  Lemma
+    (requires eq_vale_map l inp1 inp2)
+    (ensures vale_map_to_msg #l inp1 == vale_map_to_msg inp2)
+
+let vale_map_to_msg_for_eq l inp1 inp2 =
+  assert (FStar.FunctionalExtensionality.feq (vale_map_to_msg #l inp1) (vale_map_to_msg inp2))
+
+val vale_map_to_msg_part_inv :
+  l:size_t ->
+  inp:(int->nat128) ->
+  Lemma (eq_vale_map l inp
+           (vale_msg_to_map (vale_map_to_msg #l inp)))
+let vale_map_to_msg_part_inv l inp = ()
+
+val vale_msg_to_map_part_inv :
+  #l:size_t ->
+  inp:vale_msg l ->
+  Lemma (vale_map_to_msg (vale_msg_to_map inp) == inp)
+
+let vale_msg_to_map_part_inv #l inp =
+  assert (FStar.FunctionalExtensionality.feq (vale_map_to_msg (vale_msg_to_map inp)) inp)
+
+val vale_map_msg_equiv1 :
+  #l:size_t ->
+  map:(int->nat128) ->
+  msg:vale_msg l ->
+  Lemma
+    ((eq_vale_map l (vale_msg_to_map msg) map) ==>
+     (vale_map_to_msg map == msg))
+
+let vale_map_msg_equiv1 #l map msg =
+  assert ((eq_vale_map l (vale_msg_to_map msg) map) ==>
+          FStar.FunctionalExtensionality.feq (vale_map_to_msg map) msg)
+
+val vale_map_msg_equiv2 :
+  #l:size_t ->
+  map:(int->nat128) ->
+  msg:vale_msg l ->
+  Lemma
+    ((vale_map_to_msg map == msg) ==>
+     (eq_vale_map l (vale_msg_to_map msg) map))
+
+let vale_map_msg_equiv2 #l map msg =
+  match l%16 with
+  | 0 -> ()
+  | _ ->
+    let mod = pow2 (8 `op_Multiply` (l%16)) in
+    let a = (vale_msg_to_map msg) (l/16) in
+    let b = (map (l/16)) in
+    // assert (a == b % mod);
+    // assert (a % mod == a);
+    // assert (a % mod == b % mod);
+    // assert (((vale_msg_to_map msg) (l/16)) % mod == (map (l/16)) % mod);
+    admit // todo:prove
+        ()
+
+val vale_map_msg_equiv :
+  #l:size_t ->
+  map:(int->nat128) ->
+  msg:vale_msg l ->
+  Lemma (
+    (eq_vale_map l (vale_msg_to_map msg) map) <==>
+    (vale_map_to_msg map == msg))
+
+let vale_map_msg_equiv #l map msg =
+  vale_map_msg_equiv1 map msg;
+  vale_map_msg_equiv2 map msg
+
+let vale_map_to_hacl_msg (#l:size_t) (inp:int->nat128) : hacl_msg l =
+  inp_vale_to_hacl (vale_map_to_msg inp)
+
+let hacl_msg_to_vale_map (#l:size_t) (msg:hacl_msg l) : (int->nat128) =
+  vale_msg_to_map (inp_hacl_to_vale msg)
+
+val part_inv_vale :
+  #l:size_t ->
+  inp:(int->nat128) ->
+  Lemma (eq_vale_map l
+           (hacl_msg_to_vale_map (vale_map_to_hacl_msg #l inp))
+           inp)
+
+let part_inv_vale #l inp =
+  admit // todo:prove
+      ()
+
+val part_inv_hacl :
+  #l:size_t ->
+  msg:hacl_msg l ->
+  Lemma (vale_map_to_hacl_msg (hacl_msg_to_vale_map msg) == msg)
+
+let part_inv_hacl #l msg =
+  admit // todo:prove
+      ()
+
+val inp_equivalence :
+  #l:size_t ->
+  inp:(int->nat128) ->
+  msg:hacl_msg l ->
+  Lemma ((eq_vale_map l (hacl_msg_to_vale_map msg) inp) <==>
+         (vale_map_to_hacl_msg inp) == msg)
+
+        (* drop rlimit to speed up bottom part *)
+        #set-options "--z3rlimit 10"
+
 let rec inp_equivalence #l inp msg =
-  part_inv_vale inp;
-  part_inv_hacl msg
+  // part_inv_vale #l inp;
+  // part_inv_hacl msg;
+  // assert (
+    //   ((vale_map_to_hacl_msg inp) == msg) ==>
+    //   ((eq_vale_map l (hacl_msg_to_vale_map msg) inp))
+    // );
+
+  // vale_map_to_msg_for_eq l (hacl_msg_to_vale_map msg) inp;
+  // assert (
+    //   ((eq_vale_map l (hacl_msg_to_vale_map msg) inp) ==>
+          //    (vale_map_to_hacl_msg inp) == msg)
+    // );
+  admit ()
+  // let vale_msg = vale_map_to_msg inp in
+  // inp_equivalence' vale_msg hacl_msg;
+  // vale_map_msg_equiv inp (vale_map_to_msg #l inp);
+  // admit // todo:prove
+                   //     ()
