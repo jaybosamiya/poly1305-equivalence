@@ -11,7 +11,7 @@ module ValeSpec = Poly1305.Spec_s
 module HaclSpec = Spec.Poly1305
 
                   (* Need to increase limits to have the proofs go through *)
-                  #set-options "--z3rlimit 100"
+                  #set-options "--z3rlimit 300"
 
 type nat128 = ValeSpec.nat128
 
