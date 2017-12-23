@@ -18,19 +18,19 @@ find -maxdepth 1 -type f -name '*.fst' -exec fstar --use_hints {} \;
 
 Expected output:
 ```
-Verified module: Poly1305.Equivalence (152 milliseconds)
+Verified module: Poly1305.Equivalence (253 milliseconds)
 All verification conditions discharged successfully
-Verified module: TagEquivalence (146 milliseconds)
+Verified module: TagEquivalence (135 milliseconds)
 All verification conditions discharged successfully
-Verified module: MsgEquivalence (5881 milliseconds)
+Verified module: MsgEquivalence (32622 milliseconds)
 All verification conditions discharged successfully
-Verified module: UsefulLemmas (1377 milliseconds)
+Verified module: UsefulLemmas (1152 milliseconds)
 All verification conditions discharged successfully
-Verified module: Axioms (1286 milliseconds)
+Verified module: Axioms (924 milliseconds)
 All verification conditions discharged successfully
-Verified module: KeyEquivalence (774 milliseconds)
+Verified module: KeyEquivalence (947 milliseconds)
 All verification conditions discharged successfully
-Verified module: ThirdSpec (5200 milliseconds)
+Verified module: ThirdSpec (3913 milliseconds)
 All verification conditions discharged successfully
 ```
 
