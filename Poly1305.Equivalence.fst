@@ -17,21 +17,21 @@ val spec_equal :
   key_r:nat128 ->
   key_s:nat128 ->
   inp:MsgEquivalence.vale_msg len ->
-  t:int{t==ValeSpec.poly1305_hash key_r key_s (ThirdSpec.msg_to_vale inp) len} ->
   msg:lbytes len ->
-  k:key ->
-  t1:tag{t1==HaclSpec.poly1305 len msg k} ->
   Lemma
     (requires (
-        (k == KeyEquivalence.key_vale_to_hacl key_r key_s) /\
         (inp == MsgEquivalence.inp_hacl_to_vale #len msg)))
     (ensures (
+        let k = KeyEquivalence.key_vale_to_hacl key_r key_s in
+        let t = ValeSpec.poly1305_hash key_r key_s (ThirdSpec.msg_to_vale inp) len in
+        let t1 = HaclSpec.poly1305 len msg k in
         (t == TagEquivalence.tag_hacl_to_vale t1) /\
         (t1 == TagEquivalence.tag_vale_to_hacl t)))
 
-let spec_equal
-    len key_r key_s inp t
-    msg k t1 =
+let spec_equal len key_r key_s inp msg =
+  let k = KeyEquivalence.key_vale_to_hacl key_r key_s in
+  let t = ValeSpec.poly1305_hash key_r key_s (ThirdSpec.msg_to_vale inp) len in
+  let t1 = HaclSpec.poly1305 len msg k in
   KeyEquivalence.key_equivalence key_r key_s k;
   MsgEquivalence.inp_equivalence inp msg;
   ThirdSpec.poly1305_hacl len msg k;
