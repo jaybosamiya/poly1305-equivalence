@@ -43,7 +43,7 @@ date=2017-08-23T11:19:43-07:00
 commit=fa9b1fd
 ```
 
-HACL* Commit: `3b72903e` + [minor patch](hacl-star-0001-Squash-some-errors-warnings.patch)
+HACL* Commit: `3b72903e` + [minor patch](hacl-star-0001-Squash-some-errors-warnings.patch) + [minor patch](hacl-star-0002-de-anonymize-function.patch)
 
 Vale Commit: `5aab381`
 
