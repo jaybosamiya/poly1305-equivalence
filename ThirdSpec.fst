@@ -156,16 +156,14 @@ let rec poly_hacl len text r =
   Axioms.repeati_semantics blocks up init;
   lemma_hacl_repeati len text r blocks;
   let inp = MsgEquivalence.inp_hacl_to_vale text in
-  match len with
-  | 0 -> ()
-  | _ ->
-    match len%16 with
-    | 0 -> ()
-    | _ ->
-      let last = slice text (blocks * 16) len in
-      MsgEquivalence.inp_equivalence inp text;
-      lemma_slice' len inp last;
-      lemma_hacl_update rem last r acc len inp blocks
+  match len, len%16 with
+  | 0, _ -> ()
+  | _, 0 -> ()
+  | _, _ ->
+    let last = slice text (blocks * 16) len in
+    MsgEquivalence.inp_equivalence inp text;
+    lemma_slice' len inp last;
+    lemma_hacl_update rem last r acc len inp blocks
 
 let vale_last_block (len:nat) (inp:msg len) (r:nat128) (acc:elem) : elem =
   if len % 16 = 0 then acc else
