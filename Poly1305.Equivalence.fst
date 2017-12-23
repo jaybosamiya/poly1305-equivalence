@@ -20,7 +20,7 @@ val spec_equal :
   msg:lbytes len ->
   Lemma
     (requires (
-        (inp == MsgEquivalence.inp_hacl_to_vale #len msg)))
+        (inp == MsgEquivalence.inp_hacl_to_vale msg)))
     (ensures (
         let k = KeyEquivalence.key_vale_to_hacl key_r key_s in
         let t = ValeSpec.poly1305_hash key_r key_s (ThirdSpec.msg_to_vale inp) len in
