@@ -47,6 +47,42 @@ let subs_eq #l a x y =
   assert (forall (i:size_t{i<b}). x.[i+a] == y.[i+a]);
   assert (forall (j:size_t{a <= j /\ j < l}). x.[(j-a)+a] == y.[j]) // the [(j-a)+a] is required to push the proof through
 
+    private abstract
+let rec repeat_range' (#a:Type) (min:size_t) (max:size_t{min<=max})
+    (f:(s:size_t{s >= min /\ s < max} -> a -> Tot a)) (x:a) : a =
+  if min = max then x
+  else f (max-1) (repeat_range' min (max-1) f x)
+
+                 private abstract
+val rep_range_aux :
+  #a:Type{hasEq(a)} ->
+  min:size_t ->
+  mid:size_t{min <= mid} ->
+  max:size_t{mid <= max} ->
+  f:(s:size_t{s >= min /\ s < max} -> a -> Tot a) ->
+  x:a ->
+  Lemma (ensures
+           (repeat_range #a min max f x =
+            repeat_range #a mid max f (repeat_range' #a min mid f x)))
+let rec rep_range_aux #a min mid max f x =
+  match mid-min with
+  | 0 -> ()
+  | _ ->
+    rep_range_aux #a min (mid-1) max f x
+
+      private abstract
+val rep_range :
+  #a:Type{hasEq(a)} ->
+  min:size_t ->
+  max:size_t{min <= max} ->
+  f:(s:size_t{s >= min /\ s < max} -> a -> Tot a) ->
+  x:a ->
+  Lemma (ensures
+           (repeat_range #a min max f x =
+            repeat_range' #a min max f x))
+let rep_range #a min max f x =
+  rep_range_aux #a min max max f x
+
 (** Reverse direction of repeati *)
 val repeati_reverse :
   #a:Type{hasEq(a)} ->
@@ -55,25 +91,10 @@ val repeati_reverse :
   x:a ->
   Lemma
     (ensures
-       forall (i:size_t{(0<i) /\ (i<=cur)}).
-                repeati i up x = up (i-1) (repeati (i-1) up x))
+       repeati cur up x = up (cur-1) (repeati (cur-1) up x))
 
 let rec repeati_reverse #a cur up x =
   Axioms.repeati_semantics cur up x;
   Axioms.repeati_semantics (cur-1) up x;
-  match cur with
-  | 1 -> ()
-  | _ ->
-    repeati_reverse #a (cur-1) up x;
-    match cur with
-    | 2 -> ()
-    | _ ->
-      repeati_reverse #a (cur-2) up x;
-      match cur with
-      | 3 -> ()
-      | _ ->
-        repeati_reverse #a (cur-3) up x;
-        match cur with
-        | 4 -> ()
-        | _ -> admit () (* TODO: Prove. I have rolled this out a bit to
-                           show a possible direction to go in *)
+  rep_range #a 0 cur up x;
+  rep_range #a 0 (cur-1) up x
