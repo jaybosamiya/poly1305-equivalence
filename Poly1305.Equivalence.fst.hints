@@ -1,5 +1,5 @@
 [
-  "à\u001bæÓ?\u000f¥#’ï¨£ûaõ2",
+  "9Êg¢áD{ÙÄp…5%²aÇ",
   [
     [
       "Poly1305.Equivalence.spec_equal",
@@ -7,14 +7,44 @@
       2,
       1,
       [
-        "@query", "assumption_Prims.HasEq_int", "equation_Prims.nat",
-        "haseqPrims_Tm_refine_ba523126f67e00e7cd55f0b92f16681d"
+        "@MaxFuel_assumption", "@MaxIFuel_assumption",
+        "@fuel_correspondence_Prims.pow2.fuel_instrumented",
+        "@fuel_irrelevance_Prims.pow2.fuel_instrumented", "@query",
+        "Prims_pretyping_ae567c2fb75be05905677af440075565",
+        "assumption_Prims.HasEq_int", "bool_inversion",
+        "equation_MsgEquivalence.sat_idx",
+        "equation_Poly1305.Equivalence.size_t",
+        "equation_Poly1305.Spec_s.nat128_max", "equation_Prims.nat",
+        "equation_Spec.Lib.IntTypes.max_size_t",
+        "equation_Spec.Lib.IntTypes.size_t",
+        "equation_Spec.Poly1305.keysize", "equation_ThirdSpec.sat_idx",
+        "function_token_typing_Poly1305.Spec_s.nat128_max",
+        "function_token_typing_Spec.Poly1305.keysize", "int_inversion",
+        "int_typing", "lemma_Spec.Lib.IntTypes.pow2_values",
+        "primitive_Prims.op_Division", "primitive_Prims.op_Equality",
+        "primitive_Prims.op_LessThanOrEqual", "primitive_Prims.op_Modulus",
+        "primitive_Prims.op_Multiply", "projection_inverse_BoxBool_proj_0",
+        "projection_inverse_BoxInt_proj_0",
+        "refinement_interpretation_FStar.UInt_Tm_refine_8ae4abcfc6bc8d4903b7e1f40e070ec2",
+        "refinement_interpretation_Prims_Tm_refine_ba523126f67e00e7cd55f0b92f16681d",
+        "typing_ThirdSpec.sat_idx"
       ],
       0
     ],
     [
       "Poly1305.Equivalence.spec_equal",
       2,
+      2,
+      1,
+      [
+        "@query", "equation_Poly1305.Spec_s.nat128_max",
+        "equation_ThirdSpec.nat128_max"
+      ],
+      0
+    ],
+    [
+      "Poly1305.Equivalence.spec_equal",
+      3,
       2,
       1,
       [
@@ -28,8 +58,8 @@
         "equation_Spec.Lib.IntTypes.size_t",
         "equation_Spec.Poly1305.keysize", "equation_Spec.Poly1305.tag",
         "equation_TagEquivalence.hacl_tag",
-        "equation_TagEquivalence.vale_tag",
-        "function_token_typing_Spec.Lib.IntTypes.max_size_t",
+        "equation_TagEquivalence.vale_tag", "equation_ThirdSpec.nat128_max",
+        "function_token_typing_Poly1305.Spec_s.nat128_max",
         "function_token_typing_Spec.Poly1305.keysize",
         "lemma_Spec.Lib.IntTypes.pow2_values",
         "refinement_interpretation_FStar.UInt_Tm_refine_8ae4abcfc6bc8d4903b7e1f40e070ec2",
@@ -41,7 +71,7 @@
     ],
     [
       "Poly1305.Equivalence.spec_equal",
-      3,
+      4,
       2,
       1,
       [
@@ -51,9 +81,8 @@
         "Prims_pretyping_ae567c2fb75be05905677af440075565",
         "constructor_distinct_Spec.Lib.IntTypes.U8",
         "equality_tok_Spec.Lib.IntTypes.U8@tok",
-        "equation_KeyEquivalence.equal_intseqs",
-        "equation_KeyEquivalence.nat128", "equation_MsgEquivalence.nat128",
-        "equation_MsgEquivalence.vale_msg",
+        "equation_KeyEquivalence.nat128",
+        "equation_Poly1305.Equivalence.key",
         "equation_Poly1305.Equivalence.lbytes",
         "equation_Poly1305.Equivalence.nat128",
         "equation_Poly1305.Equivalence.size_t",
@@ -63,25 +92,24 @@
         "equation_Spec.Lib.IntTypes.max_size_t",
         "equation_Spec.Lib.IntTypes.size_t",
         "equation_Spec.Poly1305.blocksize", "equation_Spec.Poly1305.keysize",
-        "equation_Spec.Poly1305.tag",
+        "equation_Spec.Poly1305.poly1305", "equation_Spec.Poly1305.tag",
         "equation_TagEquivalence.tag_hacl_to_vale",
         "equation_ThirdSpec.nat128", "equation_ThirdSpec.nat128_max",
-        "function_token_typing_Spec.Lib.IntTypes.max_size_t",
+        "function_token_typing_Poly1305.Spec_s.nat128_max",
         "function_token_typing_Spec.Poly1305.blocksize",
         "function_token_typing_Spec.Poly1305.keysize",
         "lemma_Spec.Lib.IntTypes.pow2_values", "primitive_Prims.op_Equality",
         "primitive_Prims.op_LessThan", "primitive_Prims.op_LessThanOrEqual",
         "primitive_Prims.op_Multiply", "projection_inverse_BoxBool_proj_0",
         "projection_inverse_BoxInt_proj_0",
-        "refinement_interpretation_MsgEquivalence_Tm_refine_d6a127a07682097b05175e237a0b59f9",
+        "refinement_interpretation_FStar.UInt_Tm_refine_8ae4abcfc6bc8d4903b7e1f40e070ec2",
         "refinement_interpretation_Poly1305.Equivalence_Tm_refine_5563fa971c8efaae9a77b958bfa98c6d",
-        "refinement_interpretation_Poly1305.Equivalence_Tm_refine_69593ffae305bac493d4febdf3d0b142",
+        "refinement_interpretation_Poly1305.Equivalence_Tm_refine_f09b4613cd55f14234f9c624cbbdfa2e",
         "refinement_interpretation_Poly1305.Spec_s_Tm_refine_ca59d6c748a08f1d9b598850b1f7def5",
         "refinement_interpretation_Prims_Tm_refine_ba523126f67e00e7cd55f0b92f16681d",
         "refinement_interpretation_Spec.Lib.IntSeq_Tm_refine_b795488bde5bb7fa5bbd013a49b4aa71",
-        "refinement_interpretation_Spec.Lib.IntTypes_Tm_refine_8ae4abcfc6bc8d4903b7e1f40e070ec2",
-        "typing_MsgEquivalence.inp_hacl_to_vale",
         "typing_Spec.Lib.IntSeq.nat_from_intseq_le",
+        "typing_Spec.Poly1305.poly1305",
         "typing_tok_Spec.Lib.IntTypes.U8@tok"
       ],
       0
