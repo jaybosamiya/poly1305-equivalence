@@ -285,9 +285,8 @@
         "assumption_Prims.HasEq_int", "equation_KeyEquivalence.nat128",
         "equation_Poly1305.Spec_s.nat128",
         "equation_Poly1305.Spec_s.nat128_max",
-        "equation_Spec.Lib.IntTypes.max_size_t",
         "function_token_typing_Poly1305.Spec_s.nat128",
-        "function_token_typing_Spec.Lib.IntTypes.max_size_t",
+        "function_token_typing_Poly1305.Spec_s.nat128_max",
         "haseqPoly1305.Spec_s_Tm_refine_ca59d6c748a08f1d9b598850b1f7def5"
       ],
       0
