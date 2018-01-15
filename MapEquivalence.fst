@@ -76,3 +76,40 @@ val map_msg_equiv :
 
 let map_msg_equiv #l map msg =
   forward_equiv map msg
+
+(* Useful properties for [eq_vale_map] *)
+
+val eq_vale_map_transitive :
+  l:size_t ->
+  m1:(int->nat128) ->
+  m2:(int->nat128) ->
+  m3:(int->nat128) ->
+  Lemma (requires (eq_vale_map l m1 m2 /\ eq_vale_map l m2 m3))
+    (ensures (eq_vale_map l m1 m3))
+let eq_vale_map_transitive l m1 m2 m3 = ()
+
+val eq_vale_map_symmetric :
+  l:size_t ->
+  m1:(int->nat128) ->
+  m2:(int->nat128) ->
+  Lemma (requires (eq_vale_map l m1 m2))
+    (ensures (eq_vale_map l m2 m1))
+let eq_vale_map_symmetric l m1 m2 = ()
+
+val eq_vale_map_reflexive :
+  l:size_t ->
+  m:(int->nat128) ->
+  Lemma (eq_vale_map l m m)
+let eq_vale_map_reflexive l m = ()
+
+val eq_vale_map_ext :
+  l:size_t ->
+  m1:(int->nat128) ->
+  m2:(int->nat128) ->
+  Lemma (requires (eq_vale_map l m1 m2))
+    (ensures (map_to_msg #l m1 == map_to_msg m2))
+let eq_vale_map_ext l m1 m2 =
+  let a = map_to_msg #l m1 in
+  let b = map_to_msg #l m2 in
+  assert (forall (x:nat{x < l/16}). m1 x == m2 x);
+  assert (FStar.FunctionalExtensionality.feq a b)
