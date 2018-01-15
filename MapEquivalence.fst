@@ -18,6 +18,9 @@ let msg_to_map (#l:size_t) (inp:msg l) : (int->nat128) =
     then inp i
     else 0
 
+         #set-options "--z3refresh" // for some reason, required to
+                  //                   get the next part to type correctly
+
 let map_to_msg (#l:size_t) (inp:int->nat128) : (msg l) =
   if l % 16 = 0
   then
