@@ -28,7 +28,10 @@ let map_to_msg (#l:size_t) (inp:int->nat128) : (msg l) =
   else
     fun i ->
       if i = l/16
-      then (inp (l/16)) % (pow2 (8 `op_Multiply` (l % 16)))
+      then (
+        let a = (inp (l/16)) % (pow2 (8 `op_Multiply` (l % 16))) in
+        assert (a >= 0 /\ a < nat128_max);
+        a)
       else inp i
 
 (** Proposition for equivalent vale messages *)
