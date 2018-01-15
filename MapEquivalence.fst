@@ -31,7 +31,7 @@ let map_to_msg (#l:size_t) (inp:int->nat128) : (msg l) =
 (** Proposition for equivalent vale messages *)
 type eq_vale_map (l:nat) (m1:int->nat128) (m2:int->nat128) = (
   let mod = pow2 (8 `op_Multiply` (l%16)) in
-  (forall (x:nat{x < l/16}). m1 x = m2 x) /\
+  (forall (x:nat{x < l/16}). {:pattern (m1 x, m2 x)} m1 x = m2 x) /\
   (l%16 <> 0 ==> (m1 (l/16)) % mod = (m2 (l/16)) % mod))
 
 val forward_equiv :
