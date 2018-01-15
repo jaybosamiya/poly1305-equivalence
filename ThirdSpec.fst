@@ -171,11 +171,7 @@ let vale_last_block (len:nat) (inp:msg len) (r:nat128) (acc:elem) : elem =
     let padLast = pow2((len % 16) * 8) in
     ((acc + padLast + ((inp k) % padLast)) * r) % prime
 
-let msg_to_vale (#l:size_t) (inp:msg l) : (int->nat128) =
-  fun i ->
-    if sat_idx l i && i >= 0
-    then inp i
-    else 0
+let msg_to_vale #l inp = MapEquivalence.msg_to_map #l inp
 
 val poly_vale' :
   #l:size_t ->
