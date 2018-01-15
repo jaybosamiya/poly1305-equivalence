@@ -63,7 +63,7 @@ let forward_equiv #l map msg =
     assert ((eq_vale_map l map map') ==>
             msg (l/16) = msg' (l/16));
     assert ((eq_vale_map l map map') ==>
-            (forall (x:nat{x < l/16}). msg x == msg' x));
+            (forall (x:nat{x < l/16}). {:pattern (msg x, msg' x)} msg x == msg' x));
     assert ((eq_vale_map l map map') ==>
             FStar.FunctionalExtensionality.feq msg msg')
 
@@ -111,5 +111,5 @@ val eq_vale_map_ext :
 let eq_vale_map_ext l m1 m2 =
   let a = map_to_msg #l m1 in
   let b = map_to_msg #l m2 in
-  assert (forall (x:nat{x < l/16}). m1 x == m2 x);
+  assert (forall (x:nat{x < l/16}). {:pattern m1 x \/ m2 x} m1 x == m2 x);
   assert (FStar.FunctionalExtensionality.feq a b)
