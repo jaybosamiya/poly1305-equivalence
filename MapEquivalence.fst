@@ -52,7 +52,7 @@ val backward_equiv :
          (eq_vale_map l map (msg_to_map msg)))
 
         (* Need to increase limits to have the proofs go through *)
-        #set-options "--z3rlimit 40"
+        #set-options "--z3rlimit 30"
 
 let backward_equiv #l map msg = ()
 
