@@ -34,6 +34,9 @@ type eq_vale_map (l:nat) (m1:int->nat128) (m2:int->nat128) = (
   (forall (x:nat{x < l/16}). {:pattern (m1 x, m2 x)} m1 x = m2 x) /\
   (l%16 <> 0 ==> (m1 (l/16)) % mod = (m2 (l/16)) % mod))
 
+  (* Need to increase limits to have the proofs go through *)
+  #set-options "--z3rlimit 1000"
+
 val forward_equiv :
   #l:size_t ->
   map:(int->nat128) ->
@@ -42,19 +45,21 @@ val forward_equiv :
          msg == map_to_msg map)
 
 let forward_equiv #l map msg =
-  admit () // TODO: Prove
-
-val backward_equiv :
-  #l:size_t ->
-  map:(int->nat128) ->
-  msg:(msg l) ->
-  Lemma (msg == map_to_msg map ==>
-         (eq_vale_map l map (msg_to_map msg)))
-
-        (* Need to increase limits to have the proofs go through *)
-        #set-options "--z3rlimit 30"
-
-let backward_equiv #l map msg = ()
+  let map' = msg_to_map msg in
+  let msg' = map_to_msg #l map in
+  assert ((eq_vale_map l map map') ==>
+          (forall (x:nat{x < l/16}). map x == map' x));
+  match l % 16 with
+  | 0 ->
+    assert ((eq_vale_map l map map') ==>
+            FStar.FunctionalExtensionality.feq msg msg')
+  | _ ->
+    assert ((eq_vale_map l map map') ==>
+            msg (l/16) = msg' (l/16));
+    assert ((eq_vale_map l map map') ==>
+            (forall (x:nat{x < l/16}). msg x == msg' x));
+    assert ((eq_vale_map l map map') ==>
+            FStar.FunctionalExtensionality.feq msg msg')
 
 val map_msg_equiv :
   #l:size_t ->
@@ -64,5 +69,4 @@ val map_msg_equiv :
          msg == map_to_msg map)
 
 let map_msg_equiv #l map msg =
-  forward_equiv map msg;
-  backward_equiv map msg
+  forward_equiv map msg
